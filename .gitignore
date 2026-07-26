@@ -1,0 +1,23 @@
+# OS
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Logs
+*.log
+
+# Env
+.env
+.env.local
+*.local.*
+
+# Maven wrapper (root level)
+.mvn/wrapper/maven-wrapper.jar
+
+# Node (in case node_modules ends up at root)
+node_modules/

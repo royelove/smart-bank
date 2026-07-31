@@ -5,18 +5,6 @@
         <el-icon :size="20" color="#1a3a6b"><Document /></el-icon>
         <h3>交易明细</h3>
       </div>
-      <div v-if="isAdmin" class="trade-search">
-        <el-input
-          v-model="searchAccount"
-          placeholder="按账号查询"
-          clearable
-          style="width: 180px;"
-          size="small"
-          @keyup.enter="handleSearch"
-        />
-        <el-button type="primary" size="small" @click="handleSearch">查询</el-button>
-        <el-button size="small" @click="resetSearch">重置</el-button>
-      </div>
     </div>
 
     <el-table
@@ -81,21 +69,20 @@ import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/utils/request'
 
-const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
-const isAdmin = userInfo?.role === '1'
+const props = defineProps({ accountNumber: { type: String, default: '' } })
 
 const tableData = ref([])
 const loading = ref(false)
 const total = ref(0)
 const page = ref(1)
 const size = ref(10)
-const searchAccount = ref('')
+const searchAccount = ref(props.accountNumber)
 
 const loadTrades = async () => {
   loading.value = true
   try {
     const params = { page: page.value, size: size.value }
-    if (isAdmin && searchAccount.value) params.accountNumber = searchAccount.value
+    if (searchAccount.value) params.accountNumber = searchAccount.value
 
     const res = await request({ url: '/account/trades', method: 'get', params })
     tableData.value = res.data.records || []
@@ -104,9 +91,6 @@ const loadTrades = async () => {
     ElMessage.error('加载交易记录失败')
   } finally { loading.value = false }
 }
-
-const handleSearch = () => { page.value = 1; loadTrades() }
-const resetSearch = () => { searchAccount.value = ''; page.value = 1; loadTrades() }
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '-'
@@ -136,8 +120,6 @@ onMounted(() => { loadTrades() })
 .trade-header-left h3 {
   margin: 0; font-size: 16px; font-weight: 600; color: #333;
 }
-
-.trade-search { display: flex; align-items: center; gap: 6px; }
 
 .mono-text { font-family: 'Noto Sans SC', monospace; font-size: 12px; color: #666; }
 .amount-cell { font-weight: 600; color: #f56c6c; font-size: 14px; }

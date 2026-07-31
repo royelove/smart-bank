@@ -72,12 +72,6 @@
             <el-icon><DataAnalysis /></el-icon>
             <span>我的持仓</span>
           </el-menu-item>
-
-          <div class="menu-group-label" v-if="isAdmin">管理服务</div>
-          <el-menu-item index="admin" v-if="isAdmin">
-            <el-icon><Setting /></el-icon>
-            <span>账户管理</span>
-          </el-menu-item>
         </el-menu>
       </aside>
 
@@ -107,6 +101,9 @@
               </div>
               <div class="balance-account">
                 账号：{{ userInfo?.accountNumber || '--' }}
+              </div>
+              <div class="balance-idcard">
+                身份证号：{{ maskIdCard(userInfo?.userIdCard) }}
               </div>
             </div>
           </div>
@@ -187,10 +184,6 @@
       <MyHoldings @refresh-balance="loadBalance" />
     </el-dialog>
 
-    <el-dialog v-model="showAdmin" title="账户管理" width="600px" destroy-on-close>
-      <FreezeAccount />
-    </el-dialog>
-
     <el-dialog v-model="showProfile" title="个人信息" width="480px" destroy-on-close>
       <ProfileSettings @close="showProfile = false" />
     </el-dialog>
@@ -214,17 +207,20 @@ import Transfer from '@/components/Transfer.vue'
 import TradeRecords from '@/components/TradeRecords.vue'
 import ProductList from '@/components/ProductList.vue'
 import MyHoldings from '@/components/MyHoldings.vue'
-import FreezeAccount from '@/components/FreezeAccount.vue'
 import ChangePassword from '@/components/ChangePassword.vue'
 import ProfileSettings from '@/components/ProfileSettings.vue'
 import ChatBot from '@/components/ChatBot.vue'
 
 import { ArrowDown, SwitchButton, Clock, Key, User } from '@element-plus/icons-vue'
 
+const maskIdCard = (id) => {
+  if (!id || id.length < 10) return id || '--'
+  return id.substring(0, 6) + '********' + id.substring(14)
+}
+
 const router = useRouter()
 const userInfo = ref(null)
 const totalAssets = ref('0.00')
-const isAdmin = ref(false)
 const currentTime = ref('')
 const showDeposit = ref(false)
 const showWithdraw = ref(false)
@@ -232,7 +228,6 @@ const showTransfer = ref(false)
 const showRecords = ref(false)
 const showProducts = ref(false)
 const showHoldings = ref(false)
-const showAdmin = ref(false)
 const showChangePwd = ref(false)
 const showProfile = ref(false)
 let timer = null
@@ -241,7 +236,6 @@ try {
   const info = localStorage.getItem('userInfo')
   if (info) {
     userInfo.value = JSON.parse(info)
-    isAdmin.value = userInfo.value?.role === '1'
   }
 } catch (e) { console.warn(e) }
 
@@ -259,7 +253,6 @@ const handleMenuSelect = (index) => {
   if (index === 'records') showRecords.value = true
   if (index === 'products') showProducts.value = true
   if (index === 'holdings') showHoldings.value = true
-  if (index === 'admin') showAdmin.value = true
 }
 
 const updateTime = () => {

@@ -7,9 +7,11 @@ import com.bank.bankfinance.common.util.RedisUtil;
 import com.bank.bankfinance.dto.*;
 import com.bank.bankfinance.entity.Account;
 import com.bank.bankfinance.entity.Trade;
+import com.bank.bankfinance.entity.User;
 import com.bank.bankfinance.mapper.AccountMapper;
 import com.bank.bankfinance.service.AccountService;
 import com.bank.bankfinance.service.TradeService;
+import com.bank.bankfinance.service.UserService;
 import com.bank.bankfinance.vo.AccountVO;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.slf4j.Logger;
@@ -42,6 +44,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     private RedisUtil redisUtil;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private UserService userService;
 
         public Account getAccountEntity(String accountNumber){
         try {
@@ -151,8 +155,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         vo.setAccountStatus(account.getAccountStatus());
         vo.setAccountType(account.getAccountType());
         vo.setAccountHolderName(account.getAccountHolderName());
-        vo.setRole(account.getRole());
         vo.setUserPhoneNumber(account.getUserPhoneNumber());
+        vo.setUserIdCard(account.getUserIdCard());
+        vo.setUserId(account.getUserId());
         return vo;
     }
 
@@ -210,6 +215,11 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         account.setAccountType(registerDTO.getAccountType());
         account.setAccountHolderName(registerDTO.getAccountHolderName());
         account.setUserPhoneNumber(registerDTO.getUserPhoneNumber());
+        account.setUserIdCard(registerDTO.getUserIdCard());
+        User user = userService.getByUserIdCard(registerDTO.getUserIdCard());
+        if (user != null) {
+            account.setUserId(user.getId());
+        }
         this.baseMapper.insert(account);
         evictAccountCache(registerDTO.getAccountNumber());
     }
@@ -227,8 +237,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         vo.setAccountStatus(account.getAccountStatus());
         vo.setAccountType(account.getAccountType());
         vo.setAccountHolderName(account.getAccountHolderName());
-        vo.setRole(account.getRole());
         vo.setUserPhoneNumber(account.getUserPhoneNumber());
+        vo.setUserIdCard(account.getUserIdCard());
+        vo.setUserId(account.getUserId());
         return vo;
     }
 
@@ -248,35 +259,6 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         account.setPassword(passwordEncoder.encode(updatePsdDTO.getNewPassword()));
         this.updateById(account);
         evictAccountCache(accountNumber);
-    }
-
-    public static void checkAdmin(Account account){
-        if(account.getAccountStatus()==0){
-            throw new BusinessException(TRANSACTION_INVALID_FREEZE);
-        }
-        if(!"1".equals(account.getRole())){
-            throw new BusinessException(NO_ADMIN_PERMISSION);
-        }
-    }
-    @Override
-    @Transactional
-    public void freezeAccount(Account targetAccount){
-        String accountNumber = LoginContext.getAccount();
-        Account account = getAccountEntity(accountNumber);
-        checkAdmin(account);
-        targetAccount.setAccountStatus(0);
-        updateById(targetAccount);
-        evictAccountCache(targetAccount.getAccountNumber());
-    }
-    @Override
-    @Transactional
-    public void unfreezeAccount(Account targetAccount) {
-        String accountNumber = LoginContext.getAccount();
-        Account account = getAccountEntity(accountNumber);
-        checkAdmin(account);
-        targetAccount.setAccountStatus(1);
-        updateById(targetAccount);
-        evictAccountCache(targetAccount.getAccountNumber());
     }
 
     @Override
@@ -322,16 +304,23 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     @Override
     public BigDecimal getAccountBalance(String accountNumber) {
         String currentAccountNumber = LoginContext.getAccount();
-        if(currentAccountNumber == null){
-            throw new BusinessException(NO_LOGIN);
+        if (currentAccountNumber == null) {
+            Long userId = LoginContext.getUserId();
+            if (userId == null || accountNumber == null || accountNumber.isEmpty()) {
+                throw new BusinessException(NO_LOGIN);
+            }
+            Account account = getAccountEntity(accountNumber);
+            if (!userId.equals(account.getUserId())) {
+                throw new BusinessException(NO_LOGIN);
+            }
+            return account.getAccountBalance();
         }
         String targetAccountNumber = accountNumber;
         if(targetAccountNumber == null || targetAccountNumber.isEmpty()){
             targetAccountNumber = currentAccountNumber;
         }
         if(!targetAccountNumber.equals(currentAccountNumber)){
-            Account currentAccount =  getAccountEntity(currentAccountNumber);
-            checkAdmin(currentAccount);
+            throw new BusinessException(NO_LOGIN);
         }
         Account account = getAccountEntity(targetAccountNumber);
         return account.getAccountBalance();

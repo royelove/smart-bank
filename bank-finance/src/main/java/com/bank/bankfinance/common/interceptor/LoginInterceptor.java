@@ -30,8 +30,12 @@ public class LoginInterceptor implements HandlerInterceptor {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     return false;
                 }
-                String accountNumber = jwtUtil.parseToken(token);
-                LoginContext.setAccount(accountNumber);
+                String subject = jwtUtil.parseToken(token);
+                if (subject.startsWith("U_")) {
+                    LoginContext.setUserId(Long.parseLong(subject.substring(2)));
+                } else {
+                    LoginContext.setAccount(subject);
+                }
             } catch (Exception e) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 return false;

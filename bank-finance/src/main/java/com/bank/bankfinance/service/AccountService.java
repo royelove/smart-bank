@@ -16,9 +16,7 @@ public interface AccountService {
     void register(RegisterDTO registerDTO);
     AccountVO login(LoginDTO loginDTO);
     void updatePsd(UpdatePsdDTO updatePsdDTO);
-    void freezeAccount(Account targetAccount);
     Account getAccountEntity(String accountNumber);
-    void unfreezeAccount(Account targetAccount);
     BigDecimal getAccountBalance(String accountNumber);
     void sendVerificationCode(SendCodeDTO sendCodeDTO);
     void resetPassword(ResetPasswordDTO resetPasswordDTO);

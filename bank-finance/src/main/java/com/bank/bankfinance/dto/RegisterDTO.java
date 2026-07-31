@@ -28,5 +28,7 @@ public class RegisterDTO {
     @NotEmpty
     private String userPhoneNumber;
 
+    @NotEmpty
+    private String userIdCard;
     RegisterDTO(){}
 }

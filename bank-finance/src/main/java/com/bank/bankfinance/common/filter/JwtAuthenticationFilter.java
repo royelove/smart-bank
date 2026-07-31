@@ -38,8 +38,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (Boolean.TRUE.equals(redisUtil.hasKey(TOKEN_BLACKLIST_PREFIX + token))) {
                     log.warn("Token 已被加入黑名单");
                 } else {
-                    String accountNumber = jwtUtil.parseToken(token);
-                    LoginContext.setAccount(accountNumber);
+                    String subject = jwtUtil.parseToken(token);
+                    if (subject.startsWith("U_")) {
+                        LoginContext.setUserId(Long.parseLong(subject.substring(2)));
+                    } else {
+                        LoginContext.setAccount(subject);
+                    }
                 }
             } catch (Exception e) {
                 log.warn("Token 解析失败: {}", e.getMessage());

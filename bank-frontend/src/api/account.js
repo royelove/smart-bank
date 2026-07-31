@@ -94,19 +94,3 @@ export function updateProfile(data) {
         data
     })
 }
-
-// 冻结账户
-export function freezeAccount(accountNumber) {
-    return request({
-        url: `/account/admin/freezeAccount?AccountNumber=${accountNumber}`,
-        method: 'post'
-    })
-}
-
-// 解冻账户
-export function unfreezeAccount(accountNumber) {
-    return request({
-        url: `/account/admin/unfreezeAccount?AccountNumber=${accountNumber}`,
-        method: 'post'
-    })
-}

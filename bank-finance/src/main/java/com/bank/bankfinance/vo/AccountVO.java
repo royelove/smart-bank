@@ -13,7 +13,8 @@ public class AccountVO {
     private String accountType;
     private BigDecimal accountBalance;
     private Integer accountStatus;
-    private String role;
     private String userPhoneNumber;
+    private String userIdCard;
+    private Long userId;
     public AccountVO(){}
 }

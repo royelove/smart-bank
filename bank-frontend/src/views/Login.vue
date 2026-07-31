@@ -100,6 +100,7 @@
             <span class="link" @click="goRegister">注册新账户</span>
             <span class="divider">|</span>
             <span class="link" @click="goForgotPassword">忘记密码</span>
+            <span class="divider">|</span>
           </div>
           <div class="safe-tip">
             <el-icon :size="14" color="#52c41a"><SuccessFilled /></el-icon>

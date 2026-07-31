@@ -112,32 +112,23 @@ public class AccountController {
         accountService.resetPassword(resetPasswordDTO);
         return Result.success();
     }
-    @PostMapping("/admin/freezeAccount")
-    public Result<Void> freezeAccount(@Valid @RequestParam("AccountNumber")  String AccountNumber) {
-        Account targetAccount = accountService.getAccountEntity(AccountNumber);
-        accountService.freezeAccount(targetAccount);
-        return Result.success();
-    }
-    @PostMapping("/admin/unfreezeAccount")
-    public Result<Void> unfreezeAccount(@Valid @RequestParam("AccountNumber")  String AccountNumber) {
-        Account targetAccount = accountService.getAccountEntity(AccountNumber);
-        accountService.unfreezeAccount(targetAccount);
-        return Result.success();
-    }
     @GetMapping("/trades")
     public Result<IPage<Trade>> getTrades(@ModelAttribute TradeQueryDTO tradeQueryDTO) {
         String currentAccount = LoginContext.getAccount();
-        if(currentAccount == null){
-            throw new BusinessException(NO_LOGIN);
+        if (currentAccount == null) {
+            Long userId = LoginContext.getUserId();
+            String accNum = tradeQueryDTO.getAccountNumber();
+            if (userId == null || accNum == null || accNum.isEmpty()) {
+                throw new BusinessException(NO_LOGIN);
+            }
+            Account account = accountService.getAccountEntity(accNum);
+            if (!userId.equals(account.getUserId())) {
+                throw new BusinessException(NO_LOGIN);
+            }
+            IPage<Trade> trades = tradeService.getTradesByAccount(tradeQueryDTO);
+            return Result.success(trades);
         }
-        Account currentUser = accountService.getAccountEntity(currentAccount);
-        boolean isAdmin = !"1".equals(currentUser.getRole());
-        String targetAccountNumber;
-        if(isAdmin && tradeQueryDTO.getAccountNumber() != null && !tradeQueryDTO.getAccountNumber().isEmpty()){
-            targetAccountNumber = tradeQueryDTO.getAccountNumber();
-        }else{
-            targetAccountNumber = currentAccount;
-        }
+        String targetAccountNumber = currentAccount;
         Account targetAccount = accountService.getAccountEntity(targetAccountNumber);
         tradeQueryDTO.setAccountNumber(targetAccount.getAccountNumber());
         IPage<Trade> trades = tradeService.getTradesByAccount(tradeQueryDTO);

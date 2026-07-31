@@ -63,6 +63,12 @@
           </div>
           <div class="form-row">
             <div class="form-group">
+              <label class="input-label">开户人有效身份证号</label>
+              <el-input v-model="registerForm.userIdCard" placeholder="请输入有效身份证号" size="large" clearable maxlength="11" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
               <label class="input-label">账户类型</label>
               <el-select v-model="registerForm.accountType" placeholder="请选择账户类型" size="large" style="width:100%">
                 <el-option label="储蓄账户" value="储蓄">
@@ -163,6 +169,10 @@
               <span class="info-value">{{ registerForm.userPhoneNumber }}</span>
             </div>
             <div class="info-row">
+              <span class="info-label">开户人有效身份证号</span>
+              <span class="info-value">{{ registerForm.userIdCard }}</span>
+            </div>
+            <div class="info-row">
               <span class="info-label">账户类型</span>
               <span class="info-value">{{ registerForm.accountType }}</span>
             </div>
@@ -208,7 +218,8 @@ const registerForm = ref({
   accountType: '储蓄',
   userPhoneNumber: '',
   password: '',
-  checkPassword: ''
+  checkPassword: '',
+  userIdCard: ''
 })
 
 const strengthPercent = computed(() => {
@@ -532,6 +543,10 @@ const handleRegister = async () => {
   border-radius: 10px;
 }
 .prev-btn:hover { border-color: #1a3a6b; color: #1a3a6b; }
+
+.register-footer { text-align: center; padding: 16px 32px 24px; font-size: 13px; color: #999; border-top: 1px solid #f0f2f5; }
+.footer-link { color: #1a3a6b; text-decoration: none; font-weight: 600; }
+.footer-link:hover { color: #f5af19; }
 
 @media (max-width: 480px) {
   .register-header { padding: 20px 20px 16px; }

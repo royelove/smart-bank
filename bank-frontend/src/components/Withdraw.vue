@@ -120,11 +120,12 @@ import { withdraw } from '@/api/account'
 import PasswordDialog from './PasswordDialog.vue'
 import { CircleCheck, CircleClose } from '@element-plus/icons-vue'
 
-const emit = defineEmits(['close'])
+const props = defineProps({ accountNumber: { type: String, default: '' } })
+const emit = defineEmits(['close', 'refresh'])
 const refreshBalance = inject('refreshBalance', null)
 
 const step = ref('input')
-const form = reactive({ accountNumber: '', amount: 0 })
+const form = reactive({ accountNumber: props.accountNumber, amount: 0 })
 const passwordVisible = ref(false)
 const password = ref('')
 const resultMsg = ref('')
@@ -151,6 +152,7 @@ const doWithdraw = async () => {
   try {
     await withdraw({ accountNumber: form.accountNumber, amount: form.amount, password: password.value })
     if (refreshBalance) refreshBalance()
+    emit('refresh')
     tradeTime.value = new Date().toLocaleString('zh-CN', { hour12: false })
     resultMsg.value = `账户 ${form.accountNumber} 取款成功`
     resultType.value = 'success'

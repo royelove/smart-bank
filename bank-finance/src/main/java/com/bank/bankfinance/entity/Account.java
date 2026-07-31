@@ -29,10 +29,10 @@ public class Account {
     //可以修改，为更新时间
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime  updateDate;
-    //其中0代表管理员，1代表普通用户
-    private String role;
     private Integer accountStatus;
     private String userPhoneNumber;
+    private String userIdCard;
+    private Long userId;
     public Account(){}
 
 }

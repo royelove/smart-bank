@@ -143,11 +143,12 @@ import { transfer } from '@/api/account'
 import PasswordDialog from './PasswordDialog.vue'
 import { CircleCheck, CircleClose, Top, Bottom } from '@element-plus/icons-vue'
 
-const emit = defineEmits(['close'])
+const props = defineProps({ accountNumber: { type: String, default: '' } })
+const emit = defineEmits(['close', 'refresh'])
 const refreshBalance = inject('refreshBalance', null)
 
 const step = ref('input')
-const form = reactive({ outNumber: '', inNumber: '', amount: 0 })
+const form = reactive({ outNumber: props.accountNumber, inNumber: '', amount: 0 })
 const passwordVisible = ref(false)
 const password = ref('')
 const resultMsg = ref('')
@@ -173,6 +174,7 @@ const doTransfer = async () => {
   try {
     await transfer({ outNumber: form.outNumber, inNumber: form.inNumber, amount: form.amount, password: password.value })
     if (refreshBalance) refreshBalance()
+    emit('refresh')
     tradeTime.value = new Date().toLocaleString('zh-CN', { hour12: false })
     resultMsg.value = `成功从 ${form.outNumber} 转账 ¥${form.amount.toFixed(2)} 到 ${form.inNumber}`
     resultType.value = 'success'

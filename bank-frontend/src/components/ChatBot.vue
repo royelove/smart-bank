@@ -64,7 +64,6 @@
 <script setup>
 import { ref, nextTick, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import request from '@/utils/request'
 import { Headset, ChatDotRound, Close } from '@element-plus/icons-vue'
 
 const open = ref(false)
@@ -76,11 +75,12 @@ const messages = ref([
 ])
 
 const userInfo = computed(() => {
-  try {
-    return JSON.parse(localStorage.getItem('userInfo') || '{}')
-  } catch { return {} }
+  try { return JSON.parse(localStorage.getItem('userInfo') || '{}') }
+  catch { return {} }
 })
 const userShortName = computed(() => (userInfo.value?.accountHolderName || '用')[0])
+
+let abortController = null
 
 const scrollToBottom = async () => {
   await nextTick()
@@ -94,14 +94,66 @@ const send = async () => {
   input.value = ''
   loading.value = true
   scrollToBottom()
+
+  const assistantMsg = { role: 'assistant', content: '' }
+  messages.value.push(assistantMsg)
+
+  abortController = new AbortController()
   try {
-    const res = await request({ url: '/ai/chat', method: 'post', data: { message: text } })
-    messages.value.push({ role: 'assistant', content: res.data || '暂无回复' })
-  } catch {
-    messages.value.push({ role: 'assistant', content: '网络异常，请稍后再试。' })
+    const token = localStorage.getItem('token')
+    const res = await fetch('http://localhost:8080/ai/chat/stream', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ message: text }),
+      signal: abortController.signal
+    })
+
+    if (!res.ok) {
+      assistantMsg.content = '网络异常，请稍后再试。'
+      loading.value = false
+      scrollToBottom()
+      return
+    }
+
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+
+      for (const line of lines) {
+        if (line.startsWith('data:')) {
+          const data = line.substring(5).replace(/\r$/, '')
+          if (data === '') continue
+          assistantMsg.content += data
+          scrollToBottom()
+        }
+      }
+    }
+  } catch (e) {
+    if (e.name !== 'AbortError') {
+      assistantMsg.content = assistantMsg.content || '网络异常，请稍后再试。'
+    }
   } finally {
     loading.value = false
+    abortController = null
     scrollToBottom()
+  }
+}
+
+const cancel = () => {
+  if (abortController) {
+    abortController.abort()
+    loading.value = false
   }
 }
 </script>
@@ -198,16 +250,18 @@ const send = async () => {
 .dot:nth-child(2) { animation-delay: 0.2s; }
 .dot:nth-child(3) { animation-delay: 0.4s; }
 @keyframes bounce {
-  0%,80%,100% { transform: translateY(0); opacity: 0.4; }
-  40% { transform: translateY(-6px); opacity: 1; }
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
 }
 
-.chat-input { padding: 12px 16px; border-top: 1px solid #eee; background: #fff; }
+.chat-input { padding: 12px; border-top: 1px solid #eee; }
+.chat-input :deep(.el-input-group__append) { padding: 0; }
+.chat-input :deep(.el-button) { height: 100%; border-radius: 0; min-width: 60px; }
 
-.chat-slide-enter-active { animation: slideUp 0.3s ease-out; }
-.chat-slide-leave-active { animation: slideUp 0.25s ease-in reverse; }
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+.chat-slide-enter-active, .chat-slide-leave-active {
+  transition: all 0.3s ease;
+}
+.chat-slide-enter-from, .chat-slide-leave-to {
+  opacity: 0; transform: translateY(16px) scale(0.95);
 }
 </style>

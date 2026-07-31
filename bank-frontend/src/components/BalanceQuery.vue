@@ -5,20 +5,6 @@
         <el-icon :size="20" color="#1a3a6b"><Wallet /></el-icon>
         <h3>余额查询</h3>
       </div>
-      <div v-if="isAdmin" class="admin-search">
-        <el-input
-          v-model="form.accountNumber"
-          placeholder="输入账号查询"
-          clearable
-          style="width: 200px;"
-          size="small"
-          @keyup.enter="handleQuery"
-        />
-        <el-button type="primary" size="small" @click="handleQuery" :loading="loading">
-          <el-icon><Search /></el-icon> 查询
-        </el-button>
-        <el-button size="small" @click="resetQuery">重置</el-button>
-      </div>
     </div>
 
     <!-- Loading skeleton -->
@@ -56,6 +42,10 @@
               {{ resultData.accountStatus === 1 ? '正常' : '冻结' }}
             </el-tag>
           </div>
+          <div class="info-item">
+            <span class="info-label">身份证号</span>
+            <span class="info-value">{{ maskIdCard(resultData.userIdCard) }}</span>
+          </div>
         </div>
 
         <div class="balance-display">
@@ -74,36 +64,32 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Search, CircleCheck } from '@element-plus/icons-vue'
+import { CircleCheck } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
-const userInfo = computed(() => {
-  try { return JSON.parse(localStorage.getItem('userInfo') || '{}') }
-  catch { return {} }
-})
-const isAdmin = computed(() => userInfo.value?.role === '1')
-
-const form = reactive({ accountNumber: '' })
+const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
 const loading = ref(false)
 const resultVisible = ref(false)
 const errorMsg = ref('')
+const maskIdCard = (id) => {
+  if (!id || id.length < 10) return id || '--'
+  return id.substring(0, 6) + '********' + id.substring(14)
+}
+
 const resultData = reactive({
   accountNumber: '', accountHolderName: '', accountType: '',
-  accountStatus: 1, accountBalance: '0.00'
+  accountStatus: 1, accountBalance: '0.00', userIdCard: ''
 })
 
 const handleQuery = async () => {
   loading.value = true; errorMsg.value = ''; resultVisible.value = false
   try {
-    const params = {}
-    if (isAdmin.value && form.accountNumber) params.accountNumber = form.accountNumber
-
     const accountRes = await request({
       url: '/account/getAccountEntity',
       method: 'post',
-      params: { accountNumber: params.accountNumber || userInfo.value?.accountNumber || '' }
+      params: { accountNumber: userInfo?.accountNumber || '' }
     })
 
     const d = accountRes.data
@@ -112,17 +98,14 @@ const handleQuery = async () => {
     resultData.accountType = d.accountType
     resultData.accountStatus = d.accountStatus
     resultData.accountBalance = d.accountBalance?.toFixed(2) || '0.00'
+    resultData.userIdCard = d.userIdCard
     resultVisible.value = true
   } catch (error) {
     errorMsg.value = '查询失败，请检查账号是否正确'
   } finally { loading.value = false }
 }
 
-const resetQuery = () => { form.accountNumber = ''; handleQuery() }
-
-onMounted(() => {
-  if (!isAdmin.value || (isAdmin.value && !form.accountNumber)) handleQuery()
-})
+onMounted(() => { handleQuery() })
 </script>
 
 <style scoped>
@@ -138,7 +121,6 @@ onMounted(() => {
 .section-top-left h3 {
   margin: 0; font-size: 16px; font-weight: 600; color: #333;
 }
-.admin-search { display: flex; align-items: center; gap: 6px; }
 
 .loading-skeleton { padding: 20px; }
 
@@ -194,7 +176,5 @@ onMounted(() => {
 
 @media (max-width: 480px) {
   .info-grid { grid-template-columns: 1fr; }
-  .admin-search { flex-wrap: wrap; }
-  .admin-search .el-input { width: 100% !important; }
 }
 </style>

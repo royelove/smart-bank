@@ -45,3 +45,8 @@ knife4j:
   setting:
     language: zh_cn
 
+ai:
+  api-key: ${API_KEY:}
+  model: deepseek-chat
+  base-url: https://api.deepseek.com
+

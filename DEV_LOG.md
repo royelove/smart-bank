@@ -5,6 +5,40 @@
 
 ---
 
+## 2026-08-06 · 接入人脸实名认证（本地 ArcFace 微服务）
+
+### 方案
+新增 `face_server/`（Python + InsightFace/ArcFace），与后端解耦的独立微服务，监听 `8001`；人脸特征以 JSON+Base64 传递，特征统一为 512 维归一化向量；判定阈值 `FACE_THRESHOLD`（默认 0.45）。模型经 ModelScope 下载 `fireicewolf/buffalo_l`（GitHub 直连被墙）。
+
+### 后端
+| 文件 | 改动 |
+|------|------|
+| `config/FaceProperties.java` + `application.yml` | `face.base-url` / `face.timeout-ms` 配置，默认 `http://localhost:8001` |
+| `config/FaceColumnMigrationRunner.java` | `@Order(1)` 启动时幂等建列：`t_user.face_feature` NVARCHAR(MAX) NULL、`face_bound` INT DEFAULT 0（须先于 `PasswordMigrationRunner` 执行，否则其 selectList 报"列名无效"） |
+| `service/FaceService` + `impl` | 用 `RestClient` 调 `/api/face/feature`；服务不可达→`910004`，图片无脸→`910001` |
+| `service/impl/UserServiceImpl` | `bindFace(userId, image)`（未登录/重复绑定/无脸校验，特征逗号拼接 `%.6f` 入库，`face_bound=1`）；`verifyFace(userId, image)`（未绑定→`910002`，相似度低于阈值→`910003`） |
+| `controller/UserController` | `POST /user/face/bind`、`POST /user/face/verify` |
+| `common/constant/ResponseCode.java` | 新增 `910001` 无脸 / `910002` 未绑定 / `910003` 不匹配 / `910004` 服务异常 |
+| `dto/user/` | `FaceBindDTO`、`FaceVerifyDTO`（`@NotBlank image`） |
+| `vo/UserVO.java` | 新增 `faceBound` 字段 |
+
+### 前端
+- `api/user.js`：`bindFace` / `verifyFace`
+- `views/UserDashboard.vue`：新增"人脸认证"入口卡片 + 弹窗（图片上传/预览、绑定/核身、核身结果相似度展示）
+
+### 验证
+- `face_server/test_client.py` 功能用例 6/6 通过；同图相似度 1.0，水平翻转 0.964（>0.45 判定通过）
+- 后端 JDK17 `mvn compile` ✅；前端 `npm run build` ✅
+- 真实照片回归模式：`python test_client.py --realdir imgs/me imgs/others`（需自备照片）
+
+### 其他本次同步
+- DTO 按 `user` / `trade` / `support` 分包（21 个，含 4 个通配 import 文件更新）
+- 清理死代码：`LoginInterceptor`、`PageResult`、`TradeConstant`、`AccountConstant`、`TradeVO`（空接口 `SupportTicketService`）
+- 版本：后端 `0.1.0-SNAPSHOT`、前端 `0.1.0`
+- 安全：`DEV_LOG.md` 历史明文 API Key 已脱敏
+
+---
+
 ## 2026-08-03 · 修复用户提交工单被误判为"只能使用本人名下的银行卡"
 
 **问题**：用户登录（`U_` 身份）后提交工单，后端 `submitTicket` 归属校验走到 else 分支（`userId == null`），抛 `400004` "只能使用本人名下的银行卡222"。

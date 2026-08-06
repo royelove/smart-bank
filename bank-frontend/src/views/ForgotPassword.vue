@@ -9,7 +9,7 @@
         <div class="header-brand">
           <div class="header-logo">
             <el-icon :size="28" color="#f5af19"><CreditCard /></el-icon>
-            <span>智慧银行</span>
+            <span>钱钱银行</span>
           </div>
           <h2>忘记密码</h2>
           <p>验证身份后重置您的登录密码</p>

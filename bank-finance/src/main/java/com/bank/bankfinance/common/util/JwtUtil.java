@@ -10,7 +10,7 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 
 /*
-    用来生成Token,并在LoginInterceptor中对比和验证Token
+    用来生成Token,并由 JwtAuthenticationFilter 在每次请求中解析验证
  */
 @Component
 public class JwtUtil {

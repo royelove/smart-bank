@@ -41,12 +41,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     String subject = jwtUtil.parseToken(token);
                     if (subject.startsWith("U_")) {
                         LoginContext.setUserId(Long.parseLong(subject.substring(2)));
+                        log.info("[JWT] URI={} 解析用户身份 subject={} userId={}", request.getRequestURI(), subject, LoginContext.getUserId());
+                    } else if (subject.startsWith("S_")) {
+                        LoginContext.setStaffId(Long.parseLong(subject.substring(2)));
+                        log.info("[JWT] URI={} 解析客服身份 subject={} staffId={}", request.getRequestURI(), subject, LoginContext.getStaffId());
                     } else {
                         LoginContext.setAccount(subject);
+                        log.info("[JWT] URI={} 解析卡号身份 subject={} account={}", request.getRequestURI(), subject, LoginContext.getAccount());
                     }
                 }
             } catch (Exception e) {
-                log.warn("Token 解析失败: {}", e.getMessage());
+                log.warn("Token 解析失败, URI={}, 错误: {}", request.getRequestURI(), e.getMessage());
             }
         }
         try {

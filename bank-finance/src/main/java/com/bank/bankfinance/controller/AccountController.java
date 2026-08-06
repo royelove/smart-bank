@@ -7,12 +7,15 @@ import com.bank.bankfinance.common.result.Result;
 import com.bank.bankfinance.common.util.JwtUtil;
 import com.bank.bankfinance.common.util.LoginContext;
 import com.bank.bankfinance.common.util.RedisUtil;
-import com.bank.bankfinance.dto.*;
+import com.bank.bankfinance.dto.trade.*;
+import com.bank.bankfinance.dto.user.*;
 import com.bank.bankfinance.entity.Account;
 import com.bank.bankfinance.entity.Trade;
 import com.bank.bankfinance.service.AccountService;
 import com.bank.bankfinance.service.TradeService;
+import com.bank.bankfinance.service.TrendForecastService;
 import com.bank.bankfinance.vo.AccountVO;
+import com.bank.bankfinance.vo.BalanceForecastVO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,6 +41,8 @@ public class AccountController {
     private TradeService tradeService;
     @Autowired
     private RedisUtil redisUtil;
+    @Autowired
+    private TrendForecastService trendForecastService;
 
     @Value("${jwt.expiration}")
     private Long jwtExpiration;
@@ -91,6 +96,13 @@ public class AccountController {
     public Result<BigDecimal> getAccountBalance(@RequestParam(required = false) String accountNumber) {
         BigDecimal accountBalance =  accountService.getAccountBalance(accountNumber);
         return Result.success(accountBalance);
+    }
+    @GetMapping("/forecast")
+    public Result<BalanceForecastVO> forecast(@RequestParam(required = false) String accountNumber) {
+        if (accountNumber == null || accountNumber.isEmpty()) {
+            accountNumber = LoginContext.getAccount();
+        }
+        return Result.success(trendForecastService.forecast(accountNumber));
     }
     @PostMapping("/updatePsw")
     public Result<Void> updatePsw(@Valid @RequestBody UpdatePsdDTO updatePsdDTO) {

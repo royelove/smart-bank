@@ -21,3 +21,8 @@ Desktop.ini
 
 # Node (in case node_modules ends up at root)
 node_modules/
+
+# Python (face_server)
+.venv/
+__pycache__/
+*.pyc

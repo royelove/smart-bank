@@ -5,7 +5,7 @@
       <div class="header-left">
         <div class="brand-logo-mini">
           <el-icon :size="24" color="#f5af19"><CreditCard /></el-icon>
-          <span class="brand-text">智慧银行</span>
+          <span class="brand-text">钱钱银行</span>
         </div>
         <span class="header-divider"></span>
         <span class="header-welcome">欢迎回来，{{ userInfo?.accountHolderName || '用户' }}</span>
@@ -153,6 +153,12 @@
               </div>
               <span class="action-label">持仓</span>
             </div>
+            <div class="action-card" @click="showSupport = true">
+              <div class="action-icon support-icon">
+                <el-icon :size="24" color="#fff"><Headset /></el-icon>
+              </div>
+              <span class="action-label">客服/投诉</span>
+            </div>
           </div>
         </div>
 
@@ -177,11 +183,11 @@
     </el-dialog>
 
     <el-dialog v-model="showProducts" title="理财产品" width="800px" destroy-on-close>
-      <ProductList @refresh-balance="loadBalance" />
+      <ProductList :account-number="userInfo?.accountNumber" @refresh-balance="loadBalance" />
     </el-dialog>
 
     <el-dialog v-model="showHoldings" title="我的持仓" width="800px" destroy-on-close>
-      <MyHoldings @refresh-balance="loadBalance" />
+      <MyHoldings :account-number="userInfo?.accountNumber" @refresh-balance="loadBalance" />
     </el-dialog>
 
     <el-dialog v-model="showProfile" title="个人信息" width="480px" destroy-on-close>
@@ -190,6 +196,10 @@
 
     <el-dialog v-model="showChangePwd" title="修改密码" width="480px" destroy-on-close>
       <ChangePassword @close="showChangePwd = false" />
+    </el-dialog>
+
+    <el-dialog v-model="showSupport" title="客服中心" width="640px" destroy-on-close>
+      <SupportCenter :account-number="userInfo?.accountNumber" />
     </el-dialog>
 
     <ChatBot />
@@ -209,6 +219,7 @@ import ProductList from '@/components/ProductList.vue'
 import MyHoldings from '@/components/MyHoldings.vue'
 import ChangePassword from '@/components/ChangePassword.vue'
 import ProfileSettings from '@/components/ProfileSettings.vue'
+import SupportCenter from '@/components/SupportCenter.vue'
 import ChatBot from '@/components/ChatBot.vue'
 
 import { ArrowDown, SwitchButton, Clock, Key, User } from '@element-plus/icons-vue'
@@ -230,6 +241,7 @@ const showProducts = ref(false)
 const showHoldings = ref(false)
 const showChangePwd = ref(false)
 const showProfile = ref(false)
+const showSupport = ref(false)
 let timer = null
 
 try {
@@ -605,6 +617,7 @@ const logout = () => {
 .withdraw-icon { background: linear-gradient(135deg, #e6a23c, #f5af19); }
 .transfer-icon { background: linear-gradient(135deg, #67c23a, #85ce61); }
 .records-icon { background: linear-gradient(135deg, #409eff, #79bbff); }
+.support-icon { background: linear-gradient(135deg, #722ed1, #9254de); }
 
 .action-label {
   font-size: 13px;

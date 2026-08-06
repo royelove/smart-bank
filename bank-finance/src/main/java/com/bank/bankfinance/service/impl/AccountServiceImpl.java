@@ -4,12 +4,15 @@ import com.bank.bankfinance.common.constant.ResponseCode;
 import com.bank.bankfinance.common.exception.BusinessException;
 import com.bank.bankfinance.common.util.LoginContext;
 import com.bank.bankfinance.common.util.RedisUtil;
-import com.bank.bankfinance.dto.*;
+import com.bank.bankfinance.common.util.TicketNoUtil;
+import com.bank.bankfinance.dto.trade.*;
+import com.bank.bankfinance.dto.user.*;
 import com.bank.bankfinance.entity.Account;
 import com.bank.bankfinance.entity.Trade;
 import com.bank.bankfinance.entity.User;
 import com.bank.bankfinance.mapper.AccountMapper;
 import com.bank.bankfinance.service.AccountService;
+import com.bank.bankfinance.service.RiskAssessmentService;
 import com.bank.bankfinance.service.TradeService;
 import com.bank.bankfinance.service.UserService;
 import com.bank.bankfinance.vo.AccountVO;
@@ -24,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Random;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static com.bank.bankfinance.common.constant.ResponseCode.*;
@@ -46,8 +48,10 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     private PasswordEncoder passwordEncoder;
     @Autowired
     private UserService userService;
+    @Autowired
+    private RiskAssessmentService riskAssessmentService;
 
-        public Account getAccountEntity(String accountNumber){
+    public Account getAccountEntity(String accountNumber){
         try {
             Account cached = redisUtil.get(ACCOUNT_CACHE_PREFIX + accountNumber);
             if (cached != null) {
@@ -97,7 +101,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         }
         evictAccountCache(accountNumber);
         Trade trade = new Trade();
-        trade.setTradeNo(UUID.randomUUID().toString());
+        trade.setTradeNo(TicketNoUtil.tradeNo());
         trade.setAmount(depositDTO.getAmount());
         trade.setToAccount(depositDTO.getAccountNo());
         trade.setFromAccount("");
@@ -119,6 +123,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if (!passwordEncoder.matches(password, outAccount.getPassword())) {
             throw new BusinessException(PASSWORD_INVALID);
         }
+        riskAssessmentService.assessAndBlock(outNumber, transferDTO.getAmount(), inNumber);
         if(outAccount.getAccountStatus()==0){
             throw new BusinessException(TRANSACTION_INVALID_FREEZE);
         }
@@ -135,7 +140,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         evictAccountCache(inNumber);
         evictAccountCache(outNumber);
         Trade trade = new Trade();
-        trade.setTradeNo(UUID.randomUUID().toString());
+        trade.setTradeNo(TicketNoUtil.tradeNo());
         trade.setFromAccount(outNumber);
         trade.setToAccount(inNumber);
         trade.setAmount(transferDTO.getAmount());
@@ -173,6 +178,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if (!passwordEncoder.matches(password, account.getPassword())) {
             throw new BusinessException(PASSWORD_INVALID);
         }
+        riskAssessmentService.assessAndBlock(accountNumber, withdrawDTO.getAmount(), null);
         if(withdrawDTO.getAmount().compareTo(account.getAccountBalance()) > 0){
             throw new BusinessException(TRANSACTION_INVALID_INSUFFICIENT);
         }
@@ -181,7 +187,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         evictAccountCache(accountNumber);
 
         Trade trade = new Trade();
-        trade.setTradeNo(UUID.randomUUID().toString());
+        trade.setTradeNo(TicketNoUtil.tradeNo());
         trade.setFromAccount(accountNumber);
         trade.setToAccount("");
         trade.setAmount(withdrawDTO.getAmount());
@@ -211,6 +217,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         account.setAccountBalance(BigDecimal.valueOf(0.00));
         account.setAccountStatus(1);
         account.setAccountNumber(registerDTO.getAccountNumber());
+        /*
+        对密码进行BCrypt算法，Spring里面集成了这个算法，调用passwordEncoder就行
+         */
         account.setPassword(passwordEncoder.encode(password));
         account.setAccountType(registerDTO.getAccountType());
         account.setAccountHolderName(registerDTO.getAccountHolderName());

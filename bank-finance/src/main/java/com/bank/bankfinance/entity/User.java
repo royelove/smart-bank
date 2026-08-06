@@ -16,6 +16,9 @@ public class User {
     @TableField("user_phone")
     private String userPhone;
 
+    @TableField("user_name")
+    private String userName;
+
     @TableField("password")
     private String password;
 
@@ -27,4 +30,11 @@ public class User {
 
     @TableField("id_card_no")
     private String userIdCard;
+
+    @TableField("face_feature")
+    private String faceFeature;
+
+    /** 0=未绑定 1=已绑定 */
+    @TableField("face_bound")
+    private Integer faceBound;
 }

@@ -4,7 +4,7 @@
       <div class="brand-overlay"></div>
       <div class="brand-content">
         <div class="brand-logo">
-          <h1 class="brand-title">智慧银行</h1>
+          <h1 class="brand-title">钱钱银行</h1>
           <p class="brand-subtitle">SMART BANKING</p>
         </div>
         <div class="brand-features">

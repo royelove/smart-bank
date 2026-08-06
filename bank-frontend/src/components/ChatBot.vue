@@ -71,7 +71,7 @@ const input = ref('')
 const loading = ref(false)
 const msgRef = ref(null)
 const messages = ref([
-  { role: 'assistant', content: '您好！我是智慧银行智能客服，请问有什么可以帮您的？' }
+  { role: 'assistant', content: '您好！我是钱钱银行智能客服，请问有什么可以帮您的？' }
 ])
 
 const userInfo = computed(() => {

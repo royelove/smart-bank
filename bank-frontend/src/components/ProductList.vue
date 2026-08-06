@@ -7,6 +7,27 @@
       </div>
     </div>
 
+    <div v-if="recommends.length > 0" class="recommend-section">
+      <div class="recommend-header">
+        <div>
+          <h3 class="recommend-title">为你推荐</h3>
+          <p class="recommend-sub">基于风险偏好画像 · {{ recommends[0].userRiskLevel }}</p>
+        </div>
+        <span class="recommend-badge">智能推荐</span>
+      </div>
+      <div class="recommend-grid">
+        <div v-for="item in recommends" :key="item.product.id" class="recommend-card" @click="openBuy(item.product)">
+          <div class="rec-top">
+            <span class="rec-name">{{ item.product.productName }}</span>
+            <span class="rec-rate">{{ item.product.annualReturnRate }}%</span>
+          </div>
+          <div class="rec-meta">期限 {{ item.product.termDays }} 天 · 起购 ¥{{ item.product.minAmount }}</div>
+          <el-progress :percentage="item.matchScore" :stroke-width="8" :color="matchColor(item.matchScore)" />
+          <div class="rec-reason">{{ item.reason }}</div>
+        </div>
+      </div>
+    </div>
+
     <div v-if="loading" class="loading-wrap">
       <el-skeleton :rows="3" animated />
     </div>
@@ -97,12 +118,16 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { listProducts, purchaseProduct } from '@/api/financial'
+import { listProducts, purchaseProduct, getRecommendations } from '@/api/financial'
 import PasswordDialog from './PasswordDialog.vue'
 
 const emit = defineEmits(['refreshBalance'])
+const props = defineProps({
+  accountNumber: { type: String, required: true }
+})
 const loading = ref(false)
 const products = ref([])
+const recommends = ref([])
 const buyVisible = ref(false)
 const buying = ref(false)
 const currentProduct = ref(null)
@@ -120,6 +145,21 @@ const loadProducts = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const loadRecommend = async () => {
+  try {
+    const res = await getRecommendations(props.accountNumber, 3)
+    recommends.value = res.data || []
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+const matchColor = (score) => {
+  if (score >= 85) return '#52c41a'
+  if (score >= 70) return '#409eff'
+  return '#fa541c'
 }
 
 const openBuy = (product) => {
@@ -142,6 +182,7 @@ const handlePasswordConfirm = async (pwd) => {
   buying.value = true
   try {
     await purchaseProduct({
+      accountNumber: props.accountNumber,
       productId: currentProduct.value.id,
       amount: buyForm.value.amount,
       password: password.value
@@ -150,6 +191,7 @@ const handlePasswordConfirm = async (pwd) => {
     buyVisible.value = false
     emit('refreshBalance')
     loadProducts()
+    loadRecommend()
   } catch (e) {
     console.error(e)
   } finally {
@@ -157,7 +199,10 @@ const handlePasswordConfirm = async (pwd) => {
   }
 }
 
-onMounted(loadProducts)
+onMounted(() => {
+  loadProducts()
+  loadRecommend()
+})
 </script>
 
 <style scoped>
@@ -165,6 +210,48 @@ onMounted(loadProducts)
 .pl-header { margin-bottom: 20px; }
 .pl-title { font-size: 18px; font-weight: 700; color: #333; margin: 0 0 4px; }
 .pl-desc { font-size: 13px; color: #999; margin: 0; }
+.recommend-section {
+  background: linear-gradient(135deg, #f6f9ff, #eef2fb);
+  border: 1px solid #dfe7f5;
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+.recommend-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px;
+}
+.recommend-title { font-size: 16px; font-weight: 700; color: #1a3a6b; margin: 0 0 2px; }
+.recommend-sub { font-size: 12px; color: #8a97ab; margin: 0; }
+.recommend-badge {
+  font-size: 11px; font-weight: 600; color: #fff;
+  background: linear-gradient(135deg, #1a3a6b, #2d5a8c);
+  padding: 3px 12px; border-radius: 12px;
+}
+.recommend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.recommend-card {
+  background: #fff;
+  border: 1px solid #e8eef9;
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.recommend-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(26,58,107,0.12);
+  border-color: #1a3a6b;
+}
+.rec-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.rec-name { font-size: 14px; font-weight: 600; color: #333; }
+.rec-rate { font-size: 18px; font-weight: 800; color: #fa541c; }
+.rec-meta { font-size: 12px; color: #8a97ab; margin-bottom: 10px; }
+.rec-reason { font-size: 12px; color: #666; margin-top: 8px; line-height: 1.5; }
+
 .loading-wrap { padding: 40px; }
 .empty-wrap { padding: 60px 0; }
 .product-grid {

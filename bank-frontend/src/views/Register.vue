@@ -9,7 +9,7 @@
         <div class="header-brand">
           <div class="header-logo">
             <el-icon :size="28" color="#f5af19"><CreditCard /></el-icon>
-            <span>智慧银行</span>
+            <span>钱钱银行</span>
           </div>
           <h2>开通银行账户</h2>
           <p>填写以下信息完成账户注册</p>
@@ -179,7 +179,7 @@
           </div>
           <div class="agreement">
             <el-checkbox v-model="agreed">
-              <span style="font-size:13px;">我已阅读并同意 <span class="agreement-link">《智慧银行服务协议》</span></span>
+              <span style="font-size:13px;">我已阅读并同意 <span class="agreement-link">《钱钱银行服务协议》</span></span>
             </el-checkbox>
           </div>
         </div>

@@ -37,3 +37,27 @@ export function getUserInfo() {
         method: 'get'
     })
 }
+
+export function updateUserPassword(data) {
+    return request({
+        url: '/user/updatePsw',
+        method: 'post',
+        data
+    })
+}
+
+export function bindFace(data) {
+    return request({
+        url: '/user/face/bind',
+        method: 'post',
+        data
+    })
+}
+
+export function verifyFace(data) {
+    return request({
+        url: '/user/face/verify',
+        method: 'post',
+        data
+    })
+}

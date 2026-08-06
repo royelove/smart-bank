@@ -7,6 +7,8 @@ import UserLogin from '../views/UserLogin.vue'
 import UserRegister from '../views/UserRegister.vue'
 import UserDashboard from '../views/UserDashboard.vue'
 import CardTrade from '../views/CardTrade.vue'
+import SupportLogin from '../views/SupportLogin.vue'
+import SupportDashboard from '../views/SupportDashboard.vue'
 
 const routes = [
     { path: '/', redirect: '/user/login' },
@@ -17,7 +19,9 @@ const routes = [
     { path: '/user/login', component: UserLogin },
     { path: '/user/register', component: UserRegister },
     { path: '/user/dashboard', component: UserDashboard, meta: { requiresAuth: true } },
-    { path: '/trade/:accountNumber', component: CardTrade, meta: { requiresAuth: true } }
+    { path: '/trade/:accountNumber', component: CardTrade, meta: { requiresAuth: true } },
+    { path: '/support/login', component: SupportLogin },
+    { path: '/support', component: SupportDashboard }
 ]
 
 const router = createRouter({
@@ -27,7 +31,14 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
     const token = localStorage.getItem('token')
-    if (to.meta.requiresAuth && !token) {
+    const staffToken = localStorage.getItem('staff_token')
+    if (to.path.startsWith('/support')) {
+        if (to.path !== '/support/login' && !staffToken) {
+            next('/support/login')
+        } else {
+            next()
+        }
+    } else if (to.meta.requiresAuth && !token) {
         const userPath = to.path.startsWith('/user/') ? '/user/login' : '/login'
         next(userPath)
     } else {

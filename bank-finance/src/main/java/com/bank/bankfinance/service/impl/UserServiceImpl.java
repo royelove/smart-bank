@@ -1,13 +1,16 @@
 package com.bank.bankfinance.service.impl;
 
 import com.bank.bankfinance.common.exception.BusinessException;
-import com.bank.bankfinance.dto.UserRegisterDTO;
+import com.bank.bankfinance.dto.user.UserRegisterDTO;
+import com.bank.bankfinance.dto.user.UserUpdatePsdDTO;
 import com.bank.bankfinance.entity.Account;
 import com.bank.bankfinance.entity.User;
 import com.bank.bankfinance.mapper.AccountMapper;
 import com.bank.bankfinance.mapper.UserMapper;
+import com.bank.bankfinance.service.FaceService;
 import com.bank.bankfinance.service.UserService;
 import com.bank.bankfinance.vo.AccountVO;
+import com.bank.bankfinance.vo.FaceVerifyResult;
 import com.bank.bankfinance.vo.UserVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -15,9 +18,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.bank.bankfinance.common.constant.ResponseCode.FACE_NOT_BOUND;
 import static com.bank.bankfinance.common.constant.ResponseCode.PASSWORD_INVALID;
 import static com.bank.bankfinance.common.constant.ResponseCode.TRANSACTION_INVALID_NOT_SAME_CODE;
 
@@ -28,6 +33,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private PasswordEncoder passwordEncoder;
     @Autowired
     private AccountMapper accountMapper;
+    @Autowired
+    private FaceService faceService;
 
     @Override
     public void userRegister(UserRegisterDTO userRegisterDTO) {
@@ -44,6 +51,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         User user = new User();
         user.setUserPhone(userRegisterDTO.getUserPhone());
+        user.setUserName(userRegisterDTO.getUserName());
         user.setPassword(passwordEncoder.encode(password));
         user.setUserIdCard(userRegisterDTO.getUserIdCard());
         this.baseMapper.insert(user);
@@ -103,8 +111,53 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         UserVO vo = new UserVO();
         vo.setId(user.getId());
         vo.setUserPhone(user.getUserPhone());
+        vo.setUserName(user.getUserName());
         vo.setUserIdCard(user.getUserIdCard());
+        vo.setFaceBound(user.getFaceBound() == null ? 0 : user.getFaceBound());
         return vo;
+    }
+
+    @Override
+    public void bindFace(Long userId, String base64Image) {
+        User user = this.getById(userId);
+        if (user == null) throw new RuntimeException("用户不存在");
+        List<Double> feature = faceService.extractFeature(base64Image);
+        String joined = feature.stream()
+                .map(v -> String.format("%.6f", v))
+                .collect(Collectors.joining(","));
+        user.setFaceFeature(joined);
+        user.setFaceBound(1);
+        this.updateById(user);
+    }
+
+    @Override
+    public FaceVerifyResult verifyFace(Long userId, String base64Image) {
+        User user = this.getById(userId);
+        if (user == null) throw new RuntimeException("用户不存在");
+        if (user.getFaceBound() == null || user.getFaceBound().intValue() != 1
+                || user.getFaceFeature() == null || user.getFaceFeature().isEmpty()) {
+            throw new BusinessException(FACE_NOT_BOUND);
+        }
+        List<Double> stored = Arrays.stream(user.getFaceFeature().split(","))
+                .map(s -> Double.parseDouble(s.trim()))
+                .toList();
+        return faceService.verify(base64Image, stored);
+    }
+
+    @Override
+    public void updatePsw(Long userId, UserUpdatePsdDTO userUpdatePsdDTO) {
+        User user = this.getById(userId);
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        if (!passwordEncoder.matches(userUpdatePsdDTO.getOldPassword(), user.getPassword())) {
+            throw new RuntimeException("原密码错误");
+        }
+        if (!userUpdatePsdDTO.getConfirmPassword().equals(userUpdatePsdDTO.getNewPassword())) {
+            throw new BusinessException(TRANSACTION_INVALID_NOT_SAME_CODE);
+        }
+        user.setPassword(passwordEncoder.encode(userUpdatePsdDTO.getNewPassword()));
+        this.updateById(user);
     }
 
     private AccountVO toAccountVO(Account account) {

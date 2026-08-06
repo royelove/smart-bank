@@ -7,7 +7,7 @@
         </el-button>
         <div class="brand-logo-mini">
           <el-icon :size="24" color="#f5af19"><CreditCard /></el-icon>
-          <span class="brand-text">智慧银行</span>
+          <span class="brand-text">钱钱银行</span>
         </div>
         <span class="header-divider"></span>
         <span class="header-welcome">{{ accountInfo?.accountHolderName || '用户' }} · {{ accountNumber }}</span>
@@ -147,10 +147,10 @@
       <TradeRecords :account-number="accountNumber" />
     </el-dialog>
     <el-dialog v-model="showProducts" title="理财产品" width="800px" destroy-on-close>
-      <ProductList @refresh-balance="loadBalance" />
+      <ProductList :account-number="accountNumber" @refresh-balance="loadBalance" />
     </el-dialog>
     <el-dialog v-model="showHoldings" title="我的持仓" width="800px" destroy-on-close>
-      <MyHoldings @refresh-balance="loadBalance" />
+      <MyHoldings :account-number="accountNumber" @refresh-balance="loadBalance" />
     </el-dialog>
     <el-dialog v-model="showProfile" title="个人信息" width="480px" destroy-on-close>
       <ProfileSettings @close="showProfile = false" />

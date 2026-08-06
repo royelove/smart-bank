@@ -83,9 +83,6 @@ export function transfer(data) {
         data
     })
 }
-
-
-
 // 修改个人信息
 export function updateProfile(data) {
     return request({

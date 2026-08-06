@@ -3,10 +3,11 @@ package com.bank.bankfinance.controller;
 import com.bank.bankfinance.common.result.Result;
 import com.bank.bankfinance.common.util.JwtUtil;
 import com.bank.bankfinance.common.util.LoginContext;
-import com.bank.bankfinance.dto.*;
+import com.bank.bankfinance.dto.user.*;
 import com.bank.bankfinance.entity.User;
 import com.bank.bankfinance.service.UserService;
 import com.bank.bankfinance.vo.AccountVO;
+import com.bank.bankfinance.vo.FaceVerifyResult;
 import com.bank.bankfinance.vo.UserVO;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,5 +62,34 @@ public class UserController {
         }
         List<AccountVO> accounts = userService.getAccountVOsByUserId(userId);
         return Result.success(accounts);
+    }
+
+    @PostMapping("/updatePsw")
+    public Result<Void> updatePsw(@Valid @RequestBody UserUpdatePsdDTO userUpdatePsdDTO) {
+        Long userId = LoginContext.getUserId();
+        if (userId == null) {
+            return Result.fail("700002","未登录");
+        }
+        userService.updatePsw(userId, userUpdatePsdDTO);
+        return Result.success();
+    }
+
+    @PostMapping("/face/bind")
+    public Result<Void> bindFace(@Valid @RequestBody FaceBindDTO faceBindDTO) {
+        Long userId = LoginContext.getUserId();
+        if (userId == null) {
+            return Result.fail("700002","未登录");
+        }
+        userService.bindFace(userId, faceBindDTO.getImage());
+        return Result.success();
+    }
+
+    @PostMapping("/face/verify")
+    public Result<FaceVerifyResult> verifyFace(@Valid @RequestBody FaceVerifyDTO faceVerifyDTO) {
+        Long userId = LoginContext.getUserId();
+        if (userId == null) {
+            return Result.fail("700002","未登录");
+        }
+        return Result.success(userService.verifyFace(userId, faceVerifyDTO.getImage()));
     }
 }

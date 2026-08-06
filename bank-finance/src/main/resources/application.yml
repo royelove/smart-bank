@@ -50,3 +50,7 @@ ai:
   model: deepseek-chat
   base-url: https://api.deepseek.com
 
+face:
+  base-url: http://localhost:8001
+  timeout-ms: 30000
+

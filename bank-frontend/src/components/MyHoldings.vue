@@ -94,7 +94,7 @@
 
           <div class="pc-footer">
             <div v-if="item.status === 0" class="pc-footer-left">
-              <span class="footer-hint">到期自动赎回本息</span>
+              <span class="footer-hint">到期自动赎回本息 · 提前赎回仅退本金</span>
             </div>
             <div v-if="item.status === 0" class="pc-footer-right">
               <el-button
@@ -132,6 +132,9 @@ import { listHoldings, redeemProduct } from '@/api/financial'
 import PasswordDialog from './PasswordDialog.vue'
 
 const emit = defineEmits(['refreshBalance'])
+const props = defineProps({
+  accountNumber: { type: String, required: true }
+})
 const loading = ref(false)
 const holdings = ref([])
 const redeemingId = ref(null)
@@ -160,7 +163,7 @@ const progressPercent = (item) => {
 const loadHoldings = async () => {
   loading.value = true
   try {
-    const res = await listHoldings()
+    const res = await listHoldings(props.accountNumber)
     holdings.value = res.data || []
   } catch (e) {
     console.error(e)
@@ -180,8 +183,8 @@ const handleRedeemConfirm = async (pwd) => {
   const item = currentHolding.value
   redeemingId.value = item.id
   try {
-    await redeemProduct({ holdingId: item.id, password: password.value })
-    ElMessage.success('赎回成功，本金+收益已到账')
+    await redeemProduct({ accountNumber: props.accountNumber, holdingId: item.id, password: password.value })
+    ElMessage.success('赎回成功，资金已到账')
     emit('refreshBalance')
     loadHoldings()
   } catch (e) {

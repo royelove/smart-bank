@@ -8,6 +8,9 @@ import org.springframework.stereotype.Component;
 @Getter
 @Setter
 @Component
+/*
+    把配置文件application.properties里面包括ai的所有字段全部注入到这个里面
+ */
 @ConfigurationProperties(prefix = "ai")
 public class AiProperties {
     private String apiKey = "";

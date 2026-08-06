@@ -6,10 +6,12 @@ const request = axios.create({
     timeout: 10000
 })
 
-// 请求拦截器：自动携带 Token
+// 请求拦截器：自动携带 Token（仅客服后台接口用独立的 staff_token）
 request.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('token')
+        const isSupportAdmin = config.url && config.url.startsWith('/support/admin/')
+        const key = isSupportAdmin ? 'staff_token' : 'token'
+        const token = localStorage.getItem(key)
         if (token) {
             config.headers.Authorization = `Bearer ${token}`
         }
@@ -32,9 +34,16 @@ request.interceptors.response.use(
         if (error.response) {
             const status = error.response.status
             if (status === 401) {
-                ElMessage.error('登录已过期，请重新登录')
-                localStorage.removeItem('token')
-                window.location.href = '/login'
+                const isSupportAdmin = error.config?.url?.startsWith('/support/admin/')
+                if (isSupportAdmin) {
+                    ElMessage.error('客服登录已过期，请重新登录')
+                    localStorage.removeItem('staff_token')
+                    window.location.href = '/support/login'
+                } else {
+                    ElMessage.error('登录已过期，请重新登录')
+                    localStorage.removeItem('token')
+                    window.location.href = '/login'
+                }
             } else {
                 ElMessage.error(error.response.data?.msg || '请求失败')
             }

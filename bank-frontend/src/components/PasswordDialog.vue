@@ -16,7 +16,7 @@
           <div class="modal-body">
             <div class="bank-brand">
               <el-icon :size="32" color="#f5af19"><CreditCard /></el-icon>
-              <span class="brand-name">智慧银行</span>
+              <span class="brand-name">钱钱银行</span>
             </div>
 
             <div class="pin-display-area">

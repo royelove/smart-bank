@@ -1,9 +1,11 @@
 package com.bank.bankfinance.service;
 
-import com.bank.bankfinance.dto.UserRegisterDTO;
+import com.bank.bankfinance.dto.user.UserRegisterDTO;
+import com.bank.bankfinance.dto.user.UserUpdatePsdDTO;
 import com.bank.bankfinance.entity.Account;
 import com.bank.bankfinance.entity.User;
 import com.bank.bankfinance.vo.AccountVO;
+import com.bank.bankfinance.vo.FaceVerifyResult;
 import com.bank.bankfinance.vo.UserVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -16,4 +18,7 @@ public interface UserService extends IService<User> {
     List<AccountVO> getAccountVOsByUserId(Long userId);
     void addAccountToUser(Long userId, String userIdCard, String accountNumber);
     UserVO getUserInfo(Long userId);
+    void updatePsw(Long userId, UserUpdatePsdDTO userUpdatePsdDTO);
+    void bindFace(Long userId, String base64Image);
+    FaceVerifyResult verifyFace(Long userId, String base64Image);
 }

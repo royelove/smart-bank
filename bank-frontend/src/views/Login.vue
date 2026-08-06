@@ -5,7 +5,7 @@
       <div class="brand-overlay"></div>
       <div class="brand-content">
         <div class="brand-logo">
-          <h1 class="brand-title">智慧银行</h1>
+          <h1 class="brand-title">钱钱银行</h1>
           <p class="brand-subtitle">SMART BANKING</p>
         </div>
         <div class="brand-features">
@@ -33,7 +33,7 @@
         </div>
         <div class="brand-footer">
           <p>全国服务热线：95588</p>
-          <p>© 2026 智慧银行 版权所有</p>
+          <p>© 2026 钱钱银行 版权所有</p>
         </div>
       </div>
       <!-- Animated particles -->

@@ -1,6 +1,6 @@
 package com.bank.bankfinance.service.impl;
 
-import com.bank.bankfinance.dto.TradeQueryDTO;
+import com.bank.bankfinance.dto.trade.TradeQueryDTO;
 import com.bank.bankfinance.entity.Trade;
 import com.bank.bankfinance.mapper.TradeMapper;
 import com.bank.bankfinance.service.TradeService;

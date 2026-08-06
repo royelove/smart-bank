@@ -1,6 +1,7 @@
 package com.bank.bankfinance.service;
 
-import com.bank.bankfinance.dto.*;
+import com.bank.bankfinance.dto.trade.*;
+import com.bank.bankfinance.dto.user.*;
 import com.bank.bankfinance.entity.Account;
 import com.bank.bankfinance.vo.AccountVO;
 import org.springframework.stereotype.Service;

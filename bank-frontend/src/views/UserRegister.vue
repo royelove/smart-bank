@@ -9,7 +9,7 @@
         <div class="header-brand">
           <div class="header-logo">
             <el-icon :size="28" color="#f5af19"><User /></el-icon>
-            <span>智慧银行</span>
+            <span>钱钱银行</span>
           </div>
           <h2>注册新用户</h2>
           <p>注册后可绑定和管理多张银行卡</p>
@@ -17,6 +17,10 @@
       </div>
       <div class="step-content">
         <el-form :model="form" label-width="0" class="register-form">
+          <div class="form-row">
+            <label class="input-label">用户名</label>
+            <el-input v-model="form.userName" placeholder="请输入用户名" size="large" clearable maxlength="20" />
+          </div>
           <div class="form-row">
             <label class="input-label">手机号</label>
             <el-input v-model="form.userPhone" placeholder="请输入11位手机号" size="large" clearable maxlength="11" />
@@ -55,12 +59,12 @@ import { ElMessage } from 'element-plus'
 import { userRegister } from '@/api/user'
 
 const router = useRouter()
-const form = ref({ userPhone: '', userIdCard: '', password: '', checkPassword: '' })
+const form = ref({ userName: '', userPhone: '', userIdCard: '', password: '', checkPassword: '' })
 const loading = ref(false)
 
 const handleRegister = async () => {
   const f = form.value
-  if (!f.userPhone || !f.password || !f.checkPassword || !f.userIdCard) {
+  if (!f.userName || !f.userPhone || !f.password || !f.checkPassword || !f.userIdCard) {
     ElMessage.warning('请填写完整')
     return
   }

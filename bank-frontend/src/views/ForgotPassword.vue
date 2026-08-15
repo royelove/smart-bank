@@ -1,6 +1,7 @@
 <template>
   <div class="forgot-page">
     <div class="forgot-container">
+      <div class="vault-contour"></div>
       <div class="forgot-header">
         <router-link to="/login" class="back-link">
           <el-icon><ArrowLeft /></el-icon>
@@ -8,7 +9,7 @@
         </router-link>
         <div class="header-brand">
           <div class="header-logo">
-            <el-icon :size="28" color="#f5af19"><CreditCard /></el-icon>
+            <el-icon :size="28" color="var(--vault-accent)"><CreditCard /></el-icon>
             <span>钱钱银行</span>
           </div>
           <h2>忘记密码</h2>
@@ -186,18 +187,19 @@ const handleReset = async () => {
   justify-content: center;
   align-items: center;
   background:
-    radial-gradient(ellipse at 30% 20%, rgba(26,58,107,0.4) 0%, transparent 60%),
-    radial-gradient(ellipse at 70% 80%, rgba(245,175,25,0.05) 0%, transparent 50%),
-    #0a1628;
+    radial-gradient(1200px 600px at 30% 20%, rgba(212,176,106,0.07) 0%, transparent 60%),
+    var(--vault-bg);
   padding: 40px 20px;
 }
 
 .forgot-container {
+  position: relative;
   width: 480px;
   max-width: 100%;
-  background: #fff;
+  background: linear-gradient(180deg, var(--vault-panel-2), var(--vault-panel));
+  border: 1px solid var(--vault-line-strong);
   border-radius: 24px;
-  box-shadow: 0 32px 80px rgba(0,0,0,0.4);
+  box-shadow: 0 32px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
   overflow: hidden;
   animation: fadeInUp 0.5s ease-out;
 }
@@ -209,7 +211,8 @@ const handleReset = async () => {
 
 .forgot-header {
   padding: 28px 32px 20px;
-  border-bottom: 1px solid #f0f2f5;
+  border-bottom: 1px solid var(--vault-line);
+  position: relative;
 }
 
 .back-link {
@@ -217,12 +220,12 @@ const handleReset = async () => {
   align-items: center;
   gap: 4px;
   font-size: 13px;
-  color: #999;
+  color: var(--vault-text-3);
   text-decoration: none;
   margin-bottom: 16px;
   transition: color 0.2s;
 }
-.back-link:hover { color: #1a3a6b; }
+.back-link:hover { color: var(--vault-accent); }
 
 .header-brand { text-align: center; }
 .header-logo {
@@ -235,18 +238,19 @@ const handleReset = async () => {
 .header-logo span {
   font-size: 20px;
   font-weight: 700;
-  color: #1a3a6b;
+  color: var(--vault-text);
   letter-spacing: 2px;
 }
 .header-brand h2 {
   font-size: 22px;
   font-weight: 700;
-  color: #0c1a3b;
+  color: var(--vault-text);
+  letter-spacing: 0.1em;
   margin-bottom: 4px;
 }
 .header-brand p {
   font-size: 13px;
-  color: #999;
+  color: var(--vault-text-3);
 }
 
 .forgot-body {
@@ -266,8 +270,9 @@ const handleReset = async () => {
   display: block;
   font-size: 13px;
   font-weight: 600;
-  color: #333;
+  color: var(--vault-text-2);
   margin-bottom: 6px;
+  letter-spacing: 0.05em;
 }
 
 .code-row {
@@ -282,19 +287,19 @@ const handleReset = async () => {
   width: 130px;
   flex-shrink: 0;
   height: 46px;
-  background: linear-gradient(135deg, #1a3a6b, #2d5a8c);
+  background: linear-gradient(135deg, #b08d4a, #d4b06a);
   border: none;
   color: #fff;
   font-size: 14px;
   border-radius: 10px;
 }
 .code-btn:hover {
-  background: linear-gradient(135deg, #2d5a8c, #3a6a9c);
+  background: linear-gradient(135deg, #c9a458, #e6c98a);
   color: #fff;
 }
 .code-btn:disabled {
-  background: #d0d5de;
-  color: #999;
+  background: var(--vault-line-strong);
+  color: var(--vault-text-dim);
 }
 
 .forgot-form :deep(.el-input__wrapper) {
@@ -305,16 +310,17 @@ const handleReset = async () => {
 .reset-btn {
   width: 100%;
   height: 48px;
-  background: linear-gradient(135deg, #1a3a6b, #2d5a8c);
+  background: linear-gradient(135deg, #b08d4a, #d4b06a);
   border: none;
   color: #fff;
   font-size: 16px;
   font-weight: 600;
   border-radius: 10px;
   margin-top: 8px;
+  box-shadow: 0 0 18px rgba(212,176,106,0.2), inset 0 0 0 1px rgba(255,255,255,0.08);
 }
 .reset-btn:hover {
-  background: linear-gradient(135deg, #2d5a8c, #3a6a9c);
+  background: linear-gradient(135deg, #c9a458, #e6c98a);
 }
 
 @media (max-width: 480px) {

@@ -22,5 +22,7 @@ public class DepositDTO {
     private BigDecimal amount;
     @NotBlank
     private String password;
+    @NotBlank(message = "请求Id不能为空")
+    private String requestId;
     DepositDTO() {}
 }

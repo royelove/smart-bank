@@ -37,4 +37,8 @@ public class User {
     /** 0=未绑定 1=已绑定 */
     @TableField("face_bound")
     private Integer faceBound;
+
+    /** 0=未实名 1=已实名 */
+    @TableField("realname_bound")
+    private Integer realnameBound;
 }

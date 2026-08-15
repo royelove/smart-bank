@@ -5,7 +5,7 @@
         <div class="modal-container">
           <div class="modal-header">
             <div class="security-badge">
-              <el-icon :size="16" color="#52c41a"><Lock /></el-icon>
+              <el-icon :size="16" color="var(--vault-up)"><Lock /></el-icon>
               <span>安全加密通道</span>
             </div>
             <button class="close-btn" @click="handleCancel">
@@ -15,7 +15,7 @@
 
           <div class="modal-body">
             <div class="bank-brand">
-              <el-icon :size="32" color="#f5af19"><CreditCard /></el-icon>
+              <el-icon :size="32" color="var(--vault-accent)"><CreditCard /></el-icon>
               <span class="brand-name">钱钱银行</span>
             </div>
 
@@ -84,7 +84,7 @@
 
           <div class="modal-footer">
             <div class="security-note">
-              <el-icon :size="12" color="#999"><Warning /></el-icon>
+              <el-icon :size="12" color="var(--vault-text-3)"><Warning /></el-icon>
               <span>请注意周围环境，防止密码泄露</span>
             </div>
           </div>
@@ -169,16 +169,18 @@ const handleCancel = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(2, 5, 10, 0.72);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
 
 .modal-container {
+  position: relative;
   width: 380px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8f9fc 100%);
+  background: linear-gradient(180deg, #131c2e 0%, #0d1524 100%);
+  border: 1px solid var(--vault-line-strong);
   border-radius: 20px;
-  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 215, 0, 0.1);
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(212, 176, 106, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   overflow: hidden;
   animation: modalSlideIn 0.3s ease-out;
 }
@@ -193,7 +195,8 @@ const handleCancel = () => {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: linear-gradient(90deg, #0c1a3b, #1a3a6b);
+  background: linear-gradient(90deg, #0c1524, #12203a);
+  border-bottom: 1px solid var(--vault-line);
 }
 
 .security-badge {
@@ -201,20 +204,21 @@ const handleCancel = () => {
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: #52c41a;
+  color: var(--vault-up);
   font-weight: 500;
+  letter-spacing: 0.05em;
 }
 
 .close-btn {
   background: none;
   border: none;
-  color: rgba(255,255,255,0.6);
+  color: var(--vault-text-3);
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
   transition: all 0.2s;
 }
-.close-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+.close-btn:hover { color: #fff; background: rgba(212,176,106,0.1); }
 
 .modal-body {
   padding: 24px 28px 20px;
@@ -228,40 +232,19 @@ const handleCancel = () => {
   gap: 8px;
   margin-bottom: 20px;
 }
-
 .brand-name {
   font-size: 18px;
   font-weight: 700;
-  color: #1a3a6b;
+  color: var(--vault-text);
   letter-spacing: 2px;
 }
 
-.pin-display-area {
-  margin-bottom: 20px;
-}
-
-.pin-label {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 12px;
-}
-
-.pin-dots {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.dot {
-  font-size: 28px;
-  line-height: 1;
-  transition: all 0.2s;
-}
-
-.dot-filled { color: #1a3a6b; }
-.dot-empty { color: #ccc; }
-
+.pin-display-area { margin-bottom: 20px; }
+.pin-label { font-size: 14px; color: var(--vault-text-2); margin-bottom: 12px; }
+.pin-dots { display: flex; justify-content: center; gap: 12px; margin-bottom: 8px; }
+.dot { font-size: 28px; line-height: 1; transition: all 0.2s; }
+.dot-filled { color: var(--vault-accent); text-shadow: 0 0 10px rgba(212,176,106,0.7); }
+.dot-empty { color: var(--vault-line-strong); }
 .hidden-input {
   position: absolute;
   opacity: 0;
@@ -274,22 +257,20 @@ const handleCancel = () => {
   max-width: 280px;
   margin: 0 auto 16px;
 }
-
 .keypad-row {
   display: flex;
   gap: 8px;
   margin-bottom: 8px;
 }
-
 .key-btn {
   flex: 1;
   height: 52px;
-  border: 1px solid #e0e4ea;
+  border: 1px solid var(--vault-line);
   border-radius: 10px;
-  background: #fff;
+  background: rgba(212,176,106,0.04);
   font-size: 22px;
   font-weight: 600;
-  color: #1a3a6b;
+  color: var(--vault-text);
   cursor: pointer;
   transition: all 0.15s;
   display: flex;
@@ -298,35 +279,21 @@ const handleCancel = () => {
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
-
 .key-btn:hover {
-  background: #f0f4ff;
-  border-color: #1a3a6b;
+  background: rgba(212,176,106,0.12);
+  border-color: var(--vault-accent);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(26, 58, 107, 0.15);
+  box-shadow: 0 2px 8px rgba(212,176,106,0.2);
 }
-
 .key-btn:active {
   transform: translateY(0);
   box-shadow: none;
-  background: #e0e8f5;
+  background: rgba(212,176,106,0.18);
 }
+.key-btn-clear { font-size: 14px; color: var(--vault-text-3); font-weight: 500; }
+.key-btn-back { color: var(--vault-text-2); }
 
-.key-btn-clear {
-  font-size: 14px;
-  color: #999;
-  font-weight: 500;
-}
-
-.key-btn-back {
-  color: #666;
-}
-
-.confirm-row {
-  display: flex;
-  gap: 12px;
-}
-
+.confirm-row { display: flex; gap: 12px; }
 .btn-cancel, .btn-confirm {
   flex: 1;
   height: 44px;
@@ -337,40 +304,39 @@ const handleCancel = () => {
   border: none;
   transition: all 0.2s;
 }
-
 .btn-cancel {
-  background: #f0f2f5;
-  color: #666;
+  background: rgba(212,176,106,0.06);
+  border: 1px solid var(--vault-line);
+  color: var(--vault-text-2);
 }
-.btn-cancel:hover { background: #e4e7ed; }
-
+.btn-cancel:hover { background: rgba(212,176,106,0.1); }
 .btn-confirm {
-  background: linear-gradient(135deg, #f5af19, #f12711);
+  background: linear-gradient(135deg, #b08d4a, #d4b06a);
   color: #fff;
+  box-shadow: 0 0 18px rgba(212,176,106,0.25), inset 0 0 0 1px rgba(255,255,255,0.08);
 }
 .btn-confirm:hover:not(:disabled) {
-  opacity: 0.9;
-  box-shadow: 0 4px 12px rgba(241, 39, 17, 0.3);
+  box-shadow: 0 4px 16px rgba(212,176,106,0.4);
 }
 .btn-confirm:disabled {
-  background: #d0d5de;
-  color: #999;
+  background: var(--vault-line-strong);
+  color: var(--vault-text-dim);
+  box-shadow: none;
   cursor: not-allowed;
 }
 
 .modal-footer {
   padding: 10px 16px;
-  background: #f8f9fc;
-  border-top: 1px solid #eee;
+  background: rgba(8,12,20,0.6);
+  border-top: 1px solid var(--vault-line);
 }
-
 .security-note {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   font-size: 11px;
-  color: #999;
+  color: var(--vault-text-3);
 }
 
 .bank-modal-enter-active, .bank-modal-leave-active {

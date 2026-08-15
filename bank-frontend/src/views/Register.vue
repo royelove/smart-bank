@@ -1,20 +1,21 @@
 <template>
   <div class="register-page">
-    <div class="register-container">
-      <div class="register-header">
-        <router-link to="/login" class="back-link">
-          <el-icon><ArrowLeft /></el-icon>
-          <span>返回登录</span>
-        </router-link>
-        <div class="header-brand">
-          <div class="header-logo">
-            <el-icon :size="28" color="#f5af19"><CreditCard /></el-icon>
-            <span>钱钱银行</span>
+      <div class="register-container">
+        <div class="vault-contour"></div>
+        <div class="register-header">
+          <router-link to="/login" class="back-link">
+            <el-icon><ArrowLeft /></el-icon>
+            <span>返回登录</span>
+          </router-link>
+          <div class="header-brand">
+            <div class="header-logo">
+              <el-icon :size="28" color="var(--vault-accent)"><CreditCard /></el-icon>
+              <span>钱钱银行</span>
+            </div>
+            <h2>开通银行账户</h2>
+            <p>填写以下信息完成账户注册</p>
           </div>
-          <h2>开通银行账户</h2>
-          <p>填写以下信息完成账户注册</p>
         </div>
-      </div>
 
       <!-- Step Progress -->
       <div class="step-indicator">
@@ -73,21 +74,21 @@
               <el-select v-model="registerForm.accountType" placeholder="请选择账户类型" size="large" style="width:100%">
                 <el-option label="储蓄账户" value="储蓄">
                   <div class="option-item">
-                    <el-icon color="#f5af19"><Coin /></el-icon>
+                    <el-icon color="var(--vault-gold)"><Coin /></el-icon>
                     <span>储蓄账户</span>
                     <span class="option-desc">活期存取，灵活方便</span>
                   </div>
                 </el-option>
                 <el-option label="活期账户" value="活期">
                   <div class="option-item">
-                    <el-icon color="#52c41a"><Wallet /></el-icon>
+                    <el-icon color="var(--vault-up)"><Wallet /></el-icon>
                     <span>活期账户</span>
                     <span class="option-desc">随存随取，按日计息</span>
                   </div>
                 </el-option>
                 <el-option label="定期账户" value="定期">
                   <div class="option-item">
-                    <el-icon color="#409eff"><Timer /></el-icon>
+                    <el-icon color="var(--vault-accent)"><Timer /></el-icon>
                     <span>定期账户</span>
                     <span class="option-desc">固定期限，利率更高</span>
                   </div>
@@ -152,7 +153,7 @@
       <div v-if="step === 3" class="step-content">
         <div class="confirm-info">
           <div class="confirm-icon">
-            <el-icon :size="48" color="#52c41a"><CircleCheck /></el-icon>
+            <el-icon :size="48" color="var(--vault-up)"><CircleCheck /></el-icon>
           </div>
           <h3 class="confirm-title">请确认开户信息</h3>
           <div class="info-card">
@@ -275,18 +276,19 @@ const handleRegister = async () => {
   justify-content: center;
   align-items: center;
   background:
-    radial-gradient(ellipse at 30% 20%, rgba(26,58,107,0.4) 0%, transparent 60%),
-    radial-gradient(ellipse at 70% 80%, rgba(245,175,25,0.05) 0%, transparent 50%),
-    #0a1628;
+    radial-gradient(1200px 600px at 30% 20%, rgba(212,176,106,0.07) 0%, transparent 60%),
+    var(--vault-bg);
   padding: 40px 20px;
 }
 
 .register-container {
+  position: relative;
   width: 560px;
   max-width: 100%;
-  background: #fff;
+  background: linear-gradient(180deg, var(--vault-panel-2), var(--vault-panel));
+  border: 1px solid var(--vault-line-strong);
   border-radius: 24px;
-  box-shadow: 0 32px 80px rgba(0,0,0,0.4);
+  box-shadow: 0 32px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
   overflow: hidden;
   animation: fadeInUp 0.5s ease-out;
 }
@@ -298,7 +300,8 @@ const handleRegister = async () => {
 
 .register-header {
   padding: 28px 32px 20px;
-  border-bottom: 1px solid #f0f2f5;
+  border-bottom: 1px solid var(--vault-line);
+  position: relative;
 }
 
 .back-link {
@@ -306,12 +309,12 @@ const handleRegister = async () => {
   align-items: center;
   gap: 4px;
   font-size: 13px;
-  color: #999;
+  color: var(--vault-text-3);
   text-decoration: none;
   margin-bottom: 16px;
   transition: color 0.2s;
 }
-.back-link:hover { color: #1a3a6b; }
+.back-link:hover { color: var(--vault-accent); }
 
 .header-brand { text-align: center; }
 .header-logo {
@@ -324,18 +327,19 @@ const handleRegister = async () => {
 .header-logo span {
   font-size: 20px;
   font-weight: 700;
-  color: #1a3a6b;
+  color: var(--vault-text);
   letter-spacing: 2px;
 }
 .header-brand h2 {
   font-size: 22px;
   font-weight: 700;
-  color: #0c1a3b;
+  color: var(--vault-text);
+  letter-spacing: 0.1em;
   margin-bottom: 4px;
 }
 .header-brand p {
   font-size: 13px;
-  color: #999;
+  color: var(--vault-text-3);
 }
 
 /* ===== STEP INDICATOR ===== */
@@ -363,41 +367,43 @@ const handleRegister = async () => {
   justify-content: center;
   font-size: 14px;
   font-weight: 600;
-  background: #f0f2f5;
-  color: #999;
+  background: var(--vault-graphite);
+  border: 1px solid var(--vault-line);
+  color: var(--vault-text-3);
   transition: all 0.3s;
 }
 
 .step-item.active .step-circle {
-  background: #1a3a6b;
+  background: linear-gradient(135deg, #b08d4a, #d4b06a);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(26,58,107,0.3);
+  box-shadow: 0 0 14px rgba(212,176,106,0.35);
 }
 
 .step-item.done .step-circle {
-  background: #52c41a;
-  color: #fff;
+  background: rgba(47,168,160,0.15);
+  color: var(--vault-up);
+  border-color: rgba(47,168,160,0.4);
 }
 
 .step-label {
   font-size: 12px;
-  color: #999;
+  color: var(--vault-text-3);
   font-weight: 500;
   white-space: nowrap;
 }
 
-.step-item.active .step-label { color: #1a3a6b; font-weight: 600; }
-.step-item.done .step-label { color: #52c41a; }
+.step-item.active .step-label { color: var(--vault-text); font-weight: 600; }
+.step-item.done .step-label { color: var(--vault-up); }
 
 .step-line {
   width: 60px;
   height: 2px;
-  background: #e0e4ea;
+  background: var(--vault-line-strong);
   margin: 0 8px;
   margin-bottom: 22px;
   transition: background 0.3s;
 }
-.step-line.active { background: #52c41a; }
+.step-line.active { background: var(--vault-up); }
 
 /* ===== FORM ===== */
 .step-content {
@@ -415,14 +421,15 @@ const handleRegister = async () => {
   display: block;
   font-size: 13px;
   font-weight: 600;
-  color: #333;
+  color: var(--vault-text-2);
   margin-bottom: 6px;
+  letter-spacing: 0.05em;
 }
 
 .input-tip {
   display: block;
   font-size: 11px;
-  color: #999;
+  color: var(--vault-text-3);
   margin-top: 4px;
 }
 
@@ -434,10 +441,10 @@ const handleRegister = async () => {
 .register-form :deep(.el-select__wrapper) {
   height: 46px;
   border-radius: 10px;
-  box-shadow: 0 0 0 1px #d0d5de !important;
+  box-shadow: 0 0 0 1px var(--vault-line-strong) !important;
 }
 .register-form :deep(.el-select__wrapper.is-focus) {
-  box-shadow: 0 0 0 2px #1a3a6b !important;
+  box-shadow: 0 0 0 1px var(--vault-accent), 0 0 14px rgba(212,176,106,0.2) !important;
 }
 
 .option-item {
@@ -447,7 +454,7 @@ const handleRegister = async () => {
 }
 .option-desc {
   font-size: 11px;
-  color: #999;
+  color: var(--vault-text-3);
   margin-left: 4px;
 }
 
@@ -462,7 +469,7 @@ const handleRegister = async () => {
 .strength-bar {
   flex: 1;
   height: 4px;
-  background: #f0f2f5;
+  background: var(--vault-graphite);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -471,10 +478,10 @@ const handleRegister = async () => {
   border-radius: 2px;
   transition: all 0.3s;
 }
-.strength-fill.weak { background: #f56c6c; }
-.strength-fill.medium { background: #e6a23c; }
-.strength-fill.strong { background: #67c23a; }
-.strength-label { font-size: 11px; color: #999; white-space: nowrap; }
+.strength-fill.weak { background: var(--vault-down); }
+.strength-fill.medium { background: var(--vault-gold); }
+.strength-fill.strong { background: var(--vault-up); }
+.strength-label { font-size: 11px; color: var(--vault-text-3); white-space: nowrap; }
 
 /* ===== CONFIRM ===== */
 .confirm-info { text-align: center; }
@@ -482,12 +489,13 @@ const handleRegister = async () => {
 .confirm-title {
   font-size: 18px;
   font-weight: 600;
-  color: #0c1a3b;
+  color: var(--vault-text);
   margin-bottom: 20px;
 }
 
 .info-card {
-  background: #f8f9fc;
+  background: rgba(8,12,20,0.5);
+  border: 1px solid var(--vault-line);
   border-radius: 12px;
   padding: 20px 24px;
   margin-bottom: 20px;
@@ -498,15 +506,15 @@ const handleRegister = async () => {
   display: flex;
   justify-content: space-between;
   padding: 10px 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--vault-line);
 }
 .info-row:last-child { border-bottom: none; }
-.info-label { font-size: 14px; color: #999; }
-.info-value { font-size: 14px; font-weight: 600; color: #333; }
+.info-label { font-size: 14px; color: var(--vault-text-3); }
+.info-value { font-size: 14px; font-weight: 600; color: var(--vault-text); }
 
 .agreement { margin-bottom: 16px; }
-.agreement-link { color: #1a3a6b; cursor: pointer; font-weight: 600; }
-.agreement-link:hover { color: #f5af19; }
+.agreement-link { color: var(--vault-accent); cursor: pointer; font-weight: 600; }
+.agreement-link:hover { color: #e6c98a; }
 
 /* ===== ACTIONS ===== */
 .step-actions {
@@ -520,33 +528,34 @@ const handleRegister = async () => {
 .next-btn, .submit-btn-final {
   flex: 1;
   height: 48px;
-  background: linear-gradient(135deg, #1a3a6b, #2d5a8c);
+  background: linear-gradient(135deg, #b08d4a, #d4b06a);
   border: none;
   color: #fff;
   font-size: 16px;
   font-weight: 600;
   border-radius: 10px;
+  box-shadow: 0 0 18px rgba(212,176,106,0.2), inset 0 0 0 1px rgba(255,255,255,0.08);
 }
 .next-btn:hover, .submit-btn-final:hover {
-  background: linear-gradient(135deg, #2d5a8c, #3a6a9c);
+  background: linear-gradient(135deg, #c9a458, #e6c98a);
 }
-.submit-btn-final:disabled { background: #d0d5de; color: #999; }
+.submit-btn-final:disabled { background: var(--vault-line-strong); color: var(--vault-text-dim); box-shadow: none; }
 
 .prev-btn {
   flex: 1;
   height: 48px;
-  border: 1px solid #d0d5de;
-  background: #fff;
-  color: #666;
+  border: 1px solid var(--vault-line);
+  background: rgba(212,176,106,0.04);
+  color: var(--vault-text-2);
   font-size: 16px;
   font-weight: 500;
   border-radius: 10px;
 }
-.prev-btn:hover { border-color: #1a3a6b; color: #1a3a6b; }
+.prev-btn:hover { border-color: var(--vault-line-hover); color: var(--vault-text); }
 
-.register-footer { text-align: center; padding: 16px 32px 24px; font-size: 13px; color: #999; border-top: 1px solid #f0f2f5; }
-.footer-link { color: #1a3a6b; text-decoration: none; font-weight: 600; }
-.footer-link:hover { color: #f5af19; }
+.register-footer { text-align: center; padding: 16px 32px 24px; font-size: 13px; color: var(--vault-text-3); border-top: 1px solid var(--vault-line); }
+.footer-link { color: var(--vault-accent); text-decoration: none; font-weight: 600; }
+.footer-link:hover { color: #e6c98a; }
 
 @media (max-width: 480px) {
   .register-header { padding: 20px 20px 16px; }

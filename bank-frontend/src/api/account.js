@@ -12,13 +12,16 @@ export function login(data) {
 }
 
 // 注册
-export function register(data) {
+export function register(data){
     return request({
         url: '/account/register',
         method: 'post',
         data
     })
+
 }
+
+
 
 // 查询账户信息
 export function getAccount(accountNumber) {

@@ -92,4 +92,13 @@ public class UserController {
         }
         return Result.success(userService.verifyFace(userId, faceVerifyDTO.getImage()));
     }
+
+    @PostMapping("/face/realname/verify")
+    public Result<FaceVerifyResult> verifyRealName(@Valid @RequestBody FaceVerifyDTO faceVerifyDTO) {
+        Long userId = LoginContext.getUserId();
+        if (userId == null) {
+            return Result.fail("700002","未登录");
+        }
+        return Result.success(userService.verifyRealName(userId, faceVerifyDTO.getImage()));
+    }
 }

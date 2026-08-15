@@ -50,7 +50,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     private UserService userService;
     @Autowired
     private RiskAssessmentService riskAssessmentService;
-
+    @Autowired
+    private AccountMapper accountMapper;
     public Account getAccountEntity(String accountNumber){
         try {
             Account cached = redisUtil.get(ACCOUNT_CACHE_PREFIX + accountNumber);
@@ -85,70 +86,103 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     @Transactional
     @Override
     public void deposit(DepositDTO depositDTO) {
-        String accountNumber = depositDTO.getAccountNo();
-        Account account = getAccountEntity(accountNumber);
-        String password = depositDTO.getPassword();
-        if (!passwordEncoder.matches(password, account.getPassword())) {
-            throw new BusinessException(PASSWORD_INVALID);
+        Boolean first = redisUtil.setIfAbsent("idem:deposit:" + depositDTO.getRequestId(), "1", 10, TimeUnit.MINUTES);
+        if(!Boolean.TRUE.equals(first)){
+            throw new BusinessException(IDEMPOTENT_REJECTED);
         }
-        if(account.getAccountStatus()==0){
-            throw new BusinessException(TRANSACTION_INVALID_FREEZE);
+        try {
+            String accountNumber = depositDTO.getAccountNo();
+            Account account = getAccountEntity(accountNumber);
+            String password = depositDTO.getPassword();
+            if (!passwordEncoder.matches(password, account.getPassword())) {
+                throw new BusinessException(PASSWORD_INVALID);
+            }
+            if (account.getAccountStatus() == 0) {
+                throw new BusinessException(TRANSACTION_INVALID_FREEZE);
+            }
+            accountMapper.addBalance(accountNumber, depositDTO.getAmount());
+            evictAccountCache(accountNumber);
+            Trade trade = new Trade();
+            trade.setTradeNo(TicketNoUtil.tradeNo());
+            trade.setAmount(depositDTO.getAmount());
+            trade.setToAccount(depositDTO.getAccountNo());
+            trade.setFromAccount("");
+            LocalDateTime now = LocalDateTime.now();
+            trade.setTradeDate(now);
+            trade.setUpdateDate(now);
+            trade.setTradeType("存款");
+            tradeService.saveTrade(trade);
+        }catch (Exception e){
+            redisUtil.delete("idem:deposit:" + depositDTO.getRequestId());
+            throw e;
         }
-        account.setAccountBalance(account.getAccountBalance().add(depositDTO.getAmount()));
-        boolean updated = this.updateById(account);
-        if (!updated) {
-            throw new BusinessException(ResponseCode.UPDATE_FAILED);
-        }
-        evictAccountCache(accountNumber);
-        Trade trade = new Trade();
-        trade.setTradeNo(TicketNoUtil.tradeNo());
-        trade.setAmount(depositDTO.getAmount());
-        trade.setToAccount(depositDTO.getAccountNo());
-        trade.setFromAccount("");
-        LocalDateTime now = LocalDateTime.now();
-        trade.setTradeDate(now);
-        trade.setUpdateDate(now);
-        trade.setTradeType("存款");
-        tradeService.saveTrade(trade);
     }
 
     @Override
     @Transactional
     public void transfer(TransferDTO transferDTO) {
-        String inNumber = transferDTO.getInNumber();
-        String outNumber = transferDTO.getOutNumber();
-        Account inAccount = getAccountEntity(inNumber);
-        Account outAccount = getAccountEntity(outNumber);
-        String password = transferDTO.getPassword();
-        if (!passwordEncoder.matches(password, outAccount.getPassword())) {
-            throw new BusinessException(PASSWORD_INVALID);
+        Boolean first = redisUtil.setIfAbsent("idem:transfer:" + transferDTO.getRequestId(), "1", 10, TimeUnit.MINUTES);
+        if (!Boolean.TRUE.equals(first)) {
+            throw new BusinessException(IDEMPOTENT_REJECTED);
         }
-        riskAssessmentService.assessAndBlock(outNumber, transferDTO.getAmount(), inNumber);
-        if(outAccount.getAccountStatus()==0){
-            throw new BusinessException(TRANSACTION_INVALID_FREEZE);
+        try {
+            String inNumber = transferDTO.getInNumber();
+            String outNumber = transferDTO.getOutNumber();
+            String firstNo = inNumber.compareTo(outNumber) > 0 ? outNumber : inNumber;
+            String secondNo = inNumber.compareTo(outNumber) < 0 ? outNumber : inNumber;
+            //用锁，先锁住卡号小的，再锁住卡号大的，防止产生A->B,B->A
+            Account firstAccount = accountMapper.selectForUpdate(firstNo);
+            Account secondAccount = accountMapper.selectForUpdate(secondNo);
+            if(firstAccount ==  null || secondAccount == null){
+                throw new BusinessException(ResponseCode.BANK_ID_INVALID);
+            }
+            if (inNumber.equals(outNumber)) {
+                throw new BusinessException(TRANSACTION_INVALID_SELF_TRANSFER);
+            }
+            Account outAccount;
+            Account inAccount;
+            if(firstAccount.getAccountNumber().equals(outNumber)){
+                 outAccount =  firstAccount;
+                 inAccount =  secondAccount;
+            }else{
+                outAccount =  secondAccount;
+                inAccount =  firstAccount;
+            }
+
+            String password = transferDTO.getPassword();
+            if (!passwordEncoder.matches(password, outAccount.getPassword())) {
+                throw new BusinessException(PASSWORD_INVALID);
+            }
+            riskAssessmentService.assessAndBlock(outNumber, transferDTO.getAmount(), inNumber);
+            if(outAccount.getAccountStatus()==0){
+                throw new BusinessException(TRANSACTION_INVALID_FREEZE);
+            }
+            if(inAccount.getAccountStatus()==0){
+                throw new BusinessException(TRANSACTION_INVALID_FREEZE_TRANSFER);
+            }
+            if(transferDTO.getAmount().compareTo(outAccount.getAccountBalance()) > 0){
+                throw new BusinessException(TRANSACTION_INVALID_INSUFFICIENT);
+            }
+            inAccount.setAccountBalance(inAccount.getAccountBalance().add(transferDTO.getAmount()));
+            outAccount.setAccountBalance(outAccount.getAccountBalance().subtract(transferDTO.getAmount()));
+            this.updateById(outAccount);
+            this.updateById(inAccount);
+            evictAccountCache(inNumber);
+            evictAccountCache(outNumber);
+            Trade trade = new Trade();
+            trade.setTradeNo(TicketNoUtil.tradeNo());
+            trade.setFromAccount(outNumber);
+            trade.setToAccount(inNumber);
+            trade.setAmount(transferDTO.getAmount());
+            trade.setTradeType("转账");
+            LocalDateTime now = LocalDateTime.now();
+            trade.setTradeDate(now);
+            trade.setUpdateDate(now);
+            tradeService.saveTrade(trade);
+        } catch (Exception e) {
+            redisUtil.delete("idem:transfer:" + transferDTO.getRequestId());
+            throw e;
         }
-        if(inAccount.getAccountStatus()==0){
-            throw new BusinessException(TRANSACTION_INVALID_FREEZE_TRANSFER);
-        }
-        if(transferDTO.getAmount().compareTo(outAccount.getAccountBalance()) > 0){
-            throw new BusinessException(TRANSACTION_INVALID_INSUFFICIENT);
-        }
-        inAccount.setAccountBalance(inAccount.getAccountBalance().add(transferDTO.getAmount()));
-        outAccount.setAccountBalance(outAccount.getAccountBalance().subtract(transferDTO.getAmount()));
-        this.updateById(outAccount);
-        this.updateById(inAccount);
-        evictAccountCache(inNumber);
-        evictAccountCache(outNumber);
-        Trade trade = new Trade();
-        trade.setTradeNo(TicketNoUtil.tradeNo());
-        trade.setFromAccount(outNumber);
-        trade.setToAccount(inNumber);
-        trade.setAmount(transferDTO.getAmount());
-        trade.setTradeType("转账");
-        LocalDateTime now = LocalDateTime.now();
-        trade.setTradeDate(now);
-        trade.setUpdateDate(now);
-        tradeService.saveTrade(trade);
     }
 
     @Override
@@ -179,11 +213,10 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             throw new BusinessException(PASSWORD_INVALID);
         }
         riskAssessmentService.assessAndBlock(accountNumber, withdrawDTO.getAmount(), null);
-        if(withdrawDTO.getAmount().compareTo(account.getAccountBalance()) > 0){
+        int n = accountMapper.deductBalance(accountNumber, withdrawDTO.getAmount());
+        if(n == 0){
             throw new BusinessException(TRANSACTION_INVALID_INSUFFICIENT);
         }
-        account.setAccountBalance(account.getAccountBalance().subtract(withdrawDTO.getAmount()));
-        this.updateById(account);
         evictAccountCache(accountNumber);
 
         Trade trade = new Trade();
@@ -204,14 +237,14 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
                 .eq(Account::getAccountNumber, registerDTO.getAccountNumber())
                 .count();
         if (existCount > 0) {
-            throw new RuntimeException("卡号已存在");
+            throw new BusinessException(ACCOUNT_EXISTS);
         }
         if(!registerDTO.getPassword().equals(registerDTO.getCheckPassword())){
             throw new BusinessException(TRANSACTION_INVALID_NOT_SAME_CODE);
         }
         String password = registerDTO.getPassword();
         if(password.length() < 6){
-            throw new RuntimeException("密码长度不能小于6位");
+            throw new BusinessException(PASSWORD_TOO_SHORT);
         }
         Account account = new Account();
         account.setAccountBalance(BigDecimal.valueOf(0.00));
@@ -238,7 +271,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     public AccountVO login(LoginDTO loginDTO) {
         Account account = getAccountEntity(loginDTO.getAccountNumber());
         if(!passwordEncoder.matches(loginDTO.getPassword(), account.getPassword())){
-            throw new RuntimeException("密码错误");
+            throw new BusinessException(PASSWORD_INVALID);
         }
         AccountVO vo = new AccountVO();
         vo.setAccountNumber(loginDTO.getAccountNumber());
@@ -278,7 +311,10 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         }
         String code = String.format("%06d", new Random().nextInt(999999));
         redisUtil.set(VERIFICATION_CODE_PREFIX + sendCodeDTO.getAccountNumber(), code, CODE_EXPIRE_MINUTES, TimeUnit.MINUTES);
-        log.info("验证码已发送 - 账户: {}, 手机: {}, 验证码: {}", sendCodeDTO.getAccountNumber(), sendCodeDTO.getUserPhoneNumber(), code);
+        String phoneTail = sendCodeDTO.getUserPhoneNumber() != null && sendCodeDTO.getUserPhoneNumber().length() >= 4
+                ? sendCodeDTO.getUserPhoneNumber().substring(sendCodeDTO.getUserPhoneNumber().length() - 4)
+                : "****";
+        log.info("验证码已发送 - 账户: {}, 手机尾号: {}", sendCodeDTO.getAccountNumber(), phoneTail);
     }
 
     @Override
@@ -334,5 +370,4 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         Account account = getAccountEntity(targetAccountNumber);
         return account.getAccountBalance();
     }
-
 }

@@ -61,3 +61,11 @@ export function verifyFace(data) {
         data
     })
 }
+
+export function verifyRealName(image) {
+    return request({
+        url: '/user/face/realname/verify',
+        method: 'post',
+        data: { image }
+    })
+}

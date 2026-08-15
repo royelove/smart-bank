@@ -11,24 +11,25 @@
     <template v-else>
       <!-- Portfolio Summary -->
       <div class="portfolio-summary">
+        <div class="vault-contour"></div>
         <div class="summary-item">
           <span class="summary-label">持有产品</span>
-          <span class="summary-value">{{ holdings.length }}</span>
+          <span class="summary-value vault-num">{{ holdings.length }}</span>
         </div>
         <div class="summary-divider"></div>
         <div class="summary-item">
           <span class="summary-label">总投资金额</span>
-          <span class="summary-value">¥{{ totalInvested }}</span>
+          <span class="summary-value vault-num">¥{{ totalInvested }}</span>
         </div>
         <div class="summary-divider"></div>
         <div class="summary-item">
           <span class="summary-label">预期总收益</span>
-          <span class="summary-value profit">+¥{{ totalReturn }}</span>
+          <span class="summary-value profit vault-num">+¥{{ totalReturn }}</span>
         </div>
         <div class="summary-divider"></div>
         <div class="summary-item">
           <span class="summary-label">预期总资产</span>
-          <span class="summary-value">¥{{ totalValue }}</span>
+          <span class="summary-value vault-num">¥{{ totalValue }}</span>
         </div>
       </div>
 
@@ -209,151 +210,81 @@ onMounted(loadHoldings)
 
 /* ===== SUMMARY ===== */
 .portfolio-summary {
+  position: relative;
   display: flex;
   align-items: center;
-  background: linear-gradient(135deg, #0c1a3b, #1a3a6b);
+  background: linear-gradient(135deg, #0e1522, #131f33 45%, #182741);
+  border: 1px solid var(--vault-line-strong);
   border-radius: 14px;
   padding: 20px 24px;
   margin-bottom: 20px;
-  color: #fff;
+  color: var(--vault-text);
+  overflow: hidden;
 }
-.summary-item {
-  flex: 1;
-  text-align: center;
-}
-.summary-label {
-  display: block;
-  font-size: 12px;
-  opacity: 0.7;
-  margin-bottom: 4px;
-}
-.summary-value {
-  display: block;
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-.summary-value.profit { color: #52c41a; }
-.summary-divider {
-  width: 1px;
-  height: 36px;
-  background: rgba(255,255,255,0.15);
-  flex-shrink: 0;
-}
+.summary-item { flex: 1; text-align: center; position: relative; z-index: 2; }
+.summary-label { display: block; font-size: 12px; color: var(--vault-text-3); margin-bottom: 4px; letter-spacing: 0.05em; }
+.summary-value { display: block; font-size: 20px; font-weight: 700; letter-spacing: 0.5px; color: #f5ecd8; }
+.summary-value.profit { color: var(--vault-up); }
+.summary-divider { width: 1px; height: 36px; background: var(--vault-line-strong); flex-shrink: 0; }
 
 /* ===== LIST ===== */
-.portfolio-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
+.portfolio-list { display: flex; flex-direction: column; gap: 12px; }
 .portfolio-card {
-  background: #fff;
-  border: 1px solid #e8ecf1;
+  background: linear-gradient(180deg, var(--vault-panel-2), var(--vault-panel));
+  border: 1px solid var(--vault-line);
   border-radius: 12px;
   overflow: hidden;
   transition: all 0.2s;
 }
 .portfolio-card:hover {
-  border-color: #c0c8d4;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  border-color: var(--vault-line-hover);
+  box-shadow: 0 2px 12px rgba(212,176,106,0.1);
 }
 .portfolio-card.redeemed { opacity: 0.65; }
 
 /* Header */
-.pc-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px 12px;
-}
-.pc-header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.pc-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px 12px; }
+.pc-header-left { display: flex; align-items: center; gap: 12px; }
 .pc-icon {
-  width: 40px;
-  height: 40px;
+  width: 40px; height: 40px;
   border-radius: 10px;
-  background: #f0f2f5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  font-weight: 700;
-  color: #999;
+  background: var(--vault-graphite);
+  border: 1px solid var(--vault-line);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700;
+  color: var(--vault-text-3);
 }
 .pc-icon.active {
-  background: linear-gradient(135deg, #1a3a6b, #2d5a8c);
-  color: #fff;
+  background: linear-gradient(135deg, #3a2c14, #5a4420);
+  color: #e6c98a;
+  box-shadow: 0 0 14px rgba(212,176,106,0.2);
 }
-.pc-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin: 0 0 2px;
-}
-.pc-status {
-  font-size: 11px;
-  font-weight: 500;
-  padding: 1px 8px;
-  border-radius: 8px;
-}
-.pc-status.holding { background: #e8f8e8; color: #52c41a; }
-.pc-status.done { background: #f0f2f5; color: #999; }
+.pc-name { font-size: 15px; font-weight: 600; color: var(--vault-text); margin: 0 0 2px; }
+.pc-status { font-size: 11px; font-weight: 500; padding: 1px 8px; border-radius: 8px; }
+.pc-status.holding { background: rgba(47,168,160,0.12); color: var(--vault-up); }
+.pc-status.done { background: var(--vault-graphite); color: var(--vault-text-3); }
 
 .pc-header-right { text-align: right; }
-.return-label { display: block; font-size: 11px; color: #bbb; margin-bottom: 2px; }
-.return-value { font-size: 18px; font-weight: 700; color: #52c41a; }
+.return-label { display: block; font-size: 11px; color: var(--vault-text-3); margin-bottom: 2px; }
+.return-value { font-size: 18px; font-weight: 700; color: var(--vault-up); }
 
 /* Body */
 .pc-body { padding: 0 20px 12px; }
-
-.pc-metrics {
-  display: flex;
-  gap: 24px;
-  padding: 10px 0;
-  border-top: 1px solid #f0f2f5;
-}
+.pc-metrics { display: flex; gap: 24px; padding: 10px 0; border-top: 1px solid var(--vault-line); }
 .metric { flex: 1; }
-.metric-label { display: block; font-size: 11px; color: #bbb; margin-bottom: 2px; }
-.metric-value { font-size: 14px; font-weight: 600; color: #333; }
-.metric-value.rate { color: #fa541c; }
-.metric-value.date { font-size: 12px; color: #888; }
+.metric-label { display: block; font-size: 11px; color: var(--vault-text-3); margin-bottom: 2px; }
+.metric-value { font-size: 14px; font-weight: 600; color: var(--vault-text); }
+.metric-value.rate { color: var(--vault-gold); }
+.metric-value.date { font-size: 12px; color: var(--vault-text-3); }
 
 /* Progress */
 .pc-progress { margin-top: 4px; }
-.progress-bar {
-  height: 4px;
-  background: #f0f2f5;
-  border-radius: 2px;
-  overflow: hidden;
-  margin-bottom: 4px;
-}
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #1a3a6b, #2d5a8c);
-  border-radius: 2px;
-  transition: width 0.5s;
-}
-.progress-info {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  color: #bbb;
-}
+.progress-bar { height: 4px; background: var(--vault-graphite); border-radius: 2px; overflow: hidden; margin-bottom: 4px; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #b08d4a, #d4b06a); border-radius: 2px; transition: width 0.5s; }
+.progress-info { display: flex; justify-content: space-between; font-size: 11px; color: var(--vault-text-3); }
 
 /* Footer */
-.pc-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 20px;
-  background: #fafbfc;
-  border-top: 1px solid #f0f2f5;
-}
-.footer-hint { font-size: 12px; color: #bbb; }
-.redeemed-text { color: #bbb; }
+.pc-footer { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: rgba(8,12,20,0.4); border-top: 1px solid var(--vault-line); }
+.footer-hint { font-size: 12px; color: var(--vault-text-3); }
+.redeemed-text { color: var(--vault-text-3); }
 </style>

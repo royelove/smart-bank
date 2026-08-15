@@ -61,3 +61,18 @@ export function closeTicket(id) {
         method: 'post'
     })
 }
+
+export function enrollIdCard(data) {
+    return request({
+        url: '/support/admin/idcard/enroll',
+        method: 'post',
+        data
+    })
+}
+
+export function getIdCardList() {
+    return request({
+        url: '/support/admin/idcard/list',
+        method: 'get'
+    })
+}

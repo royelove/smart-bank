@@ -27,9 +27,18 @@ public class TradeServiceImpl extends ServiceImpl<TradeMapper, Trade> implements
         Page<Trade> pageParam = new Page<>(page,size);
         LambdaQueryWrapper<Trade> wrapper = new LambdaQueryWrapper<>();
         if(accountNumber != null && !accountNumber.isEmpty()) {
-            wrapper.eq(Trade::getFromAccount, accountNumber)
+            wrapper.and(w -> w.eq(Trade::getFromAccount, accountNumber)
                     .or()
-                    .eq(Trade::getToAccount, accountNumber);
+                    .eq(Trade::getToAccount, accountNumber));
+        }
+        if(tradeQueryDTO.getType() != null && !tradeQueryDTO.getType().isEmpty()) {
+            wrapper.eq(Trade :: getTradeType,tradeQueryDTO.getType());
+        }
+        if(tradeQueryDTO.getStartDate() != null && !tradeQueryDTO.getStartDate().isEmpty()) {
+            wrapper.ge(Trade :: getTradeDate,tradeQueryDTO.getStartDate());
+        }
+        if(tradeQueryDTO.getEndDate() != null && !tradeQueryDTO.getEndDate().isEmpty()) {
+            wrapper.le(Trade :: getTradeDate,tradeQueryDTO.getEndDate() + " 23:59:59");
         }
         wrapper.orderByDesc(Trade :: getTradeDate);
         return this.page(pageParam,wrapper);

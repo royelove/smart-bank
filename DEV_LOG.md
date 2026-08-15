@@ -5,6 +5,86 @@
 
 ---
 
+## 2026-08-15 · 异常处理规范化 / 资金并发修复 / 鉴权收口
+
+### 1. 异常处理规范化（全量替换 RuntimeException）
+
+**目标**：业务错误统一用 `BusinessException(ResponseCode)` 抛出，避免 `GlobalExceptionHandler` 把原始消息以 `999999` 泄露给前端。
+
+| 文件 | 改动 |
+|------|------|
+| `common/constant/ResponseCode.java` | 新增 18 个业务码（`600003`~`600018`：不能给自己转账 / 卡号已存在 / 密码长度不足 / 用户不存在 / 该账号已存在 / 密码错误 / 身份证号不匹配 / 账户不存在 / 该卡不属于此身份证号 / 原密码错误 / 客服账号或密码错误 / 无效问题类型 / 工单已被受理 / 工单已关闭无法回复 / 工单已关闭 / 工单不存在）；删除误置的 `ACCOUNT_NOT_FOUND` String 常量 |
+| `service/impl/AccountServiceImpl.java` | 登录密码错误 `RuntimeException("密码错误")` → `PASSWORD_INVALID`；注册卡号已存在 → `ACCOUNT_EXISTS`；密码长度不足 → `PASSWORD_TOO_SHORT`；`new BusinessException("600003", ...)` → `TRANSACTION_INVALID_SELF_TRANSFER` |
+| `service/impl/UserServiceImpl.java` | 13 处 `RuntimeException` 全部替换（`USER_EXISTS`/`USER_NOT_FOUND`/`USER_PASSWORD_INVALID`/`ID_CARD_MISMATCH`/`ACCOUNT_NOT_FOUND`/`ACCOUNT_NOT_OWNED`/`OLD_PASSWORD_INVALID`）；删除 `login()` 中 `getUserEntity` 已抛异常导致的死代码 |
+| `service/impl/CustomerSupportServiceImpl.java` | 6 处 `RuntimeException` 替换（`SUPPORT_LOGIN_ERROR`/`TICKET_TYPE_INVALID`/`TICKET_ALREADY_ACCEPTED`/`TICKET_CLOSED_REPLY`/`TICKET_CLOSED`/`TICKET_NOT_FOUND`）；静态导入收敛为 `ResponseCode.*` |
+| `common/exception/GlobalExceptionHandler.java` | `RuntimeException` 分支不再返回 `e.getMessage()`，统一回 `999999 系统繁忙`，避免泄露内部细节 |
+
+### 2. 资金并发原子化收尾
+
+`AccountMapper` 已用 `addBalance`/`deductBalance` 原子 UPDATE，本次修复接入处的两个缺陷：
+
+| 位置 | 问题 | 修复 |
+|------|------|------|
+| `AccountServiceImpl.deposit` | `addBalance()` 后又 `updateById(account)` 用缓存旧余额整行回写，加钱实际失效 | 删除回写 `updateById` |
+| `AccountServiceImpl.withdraw` | 同上回写导致扣款失效；且余额不足判断 `if(n < 0)` 恒不成立（`deductBalance` 返回受影响行数 0/1，不足时为 0） | 删除回写；`n < 0` 改 `n == 0` |
+
+### 3. 鉴权收口：无效/过期 token 真返回 401
+
+`common/filter/JwtAuthenticationFilter.java` 重写：
+- 黑名单 token → HTTP 401 拦截（Redis 查询异常时降级放行，避免雪崩）
+- 无效/过期 token 且非公开路径 → 真返回 HTTP 401（对齐前端 `request.js` 的 401 分支，该分支此前因后端从不返 401 而形同虚设）
+- 新增公开路径白名单放行：`/account/login|register|sendCode|resetPassword`、`/user/login|register`、`/support/login|register`、`/stock/list|quote|provider`
+
+### 验证
+- 后端 JDK17 `mvn compile` ✅ BUILD SUCCESS
+- 待回归：篡改 token 请求受保护接口应返回 HTTP 401 并跳登录页；存款/取款并发下余额正确、余额不足正常拦截
+
+---
+
+## 2026-08-15 · 敏感信息收口
+
+**目标**：数据库/中间件密码不落明文、业务 SQL 与验证码不进日志。
+
+| 项 | 位置 | 改动 |
+|----|------|------|
+| 数据库密码 | `application.yml` `spring.datasource.password` | 明文 → `${DB_PASSWORD:}`（环境变量注入） |
+| RabbitMQ 密码 | `application.yml` `spring.rabbitmq.password` | 明文 `admin123` → `${RABBIT_PASSWORD:}`（环境变量注入） |
+| MyBatis SQL 日志 | `application.yml` `mybatis-plus.configuration.log-impl` | `StdOutImpl`（打印含人脸特征/身份证等敏感参数的 SQL）→ `NoLoggingImpl`（完全关闭） |
+| 验证码日志 | `service/impl/AccountServiceImpl.java` `sendVerificationCode` | 移除 `log.info` 中的验证码明文，仅保留账户号 + 手机尾号 |
+
+**验证**：
+- 后端 JDK17 `mvn compile` ✅ BUILD SUCCESS
+- 启动前需在 IDEA Run Config → Environment variables 配置：`DB_PASSWORD=Dzc123456;RABBIT_PASSWORD=admin123`
+- 重启后控制台不再打印 SQL；验证码不再以明文出现在日志
+
+---
+
+## 2026-08-14 · 修改部分已知的 bug
+
+### 1. `JwtAuthenticationFilter.java` 黑名单 bug
+
+**问题**：命中黑名单时只是报警，仍然放行，属于安全方面的明显 bug。
+
+**原代码**：
+```java
+if (Boolean.TRUE.equals(redisUtil.hasKey(TOKEN_BLACKLIST_PREFIX + token))) {
+    log.warn("Token 已被加入黑名单");
+}
+```
+
+**更改后代码**：
+```java
+if (Boolean.TRUE.equals(redisUtil.hasKey(TOKEN_BLACKLIST_PREFIX + token))) {
+    log.warn("Token 已失效(黑名单), URI={}", request.getRequestURI());
+    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    response.setContentType("application/json;charset=UTF-8");
+    response.getWriter().write("{\"code\":\"401000\",\"msg\":\"登录已失效，请重新登录\"}");
+    return;   // 关键：不调用 filterChain.doFilter
+}
+```
+
+---
+
 ## 2026-08-06 · 接入人脸实名认证（本地 ArcFace 微服务）
 
 ### 方案
@@ -61,31 +141,28 @@
 
 ---
 
-**问题**：用户-卡分离后登录 token 为 `U_<userId>`，`LoginInterceptor` 只设 `userId` 不设 `account`；理财 `purchase`/`listHoldings`/`redeem` 读 `LoginContext.getAccount()` 恒为 null → 抛 `NO_LOGIN`，前端购买/持仓/赎回全部失败。
+## 2026-08-03 · 客服系统（工单/投诉处理）
 
-**方案**：理财操作显式传 `accountNumber`（前端当前选中卡），后端归属校验（与 `getAccountBalance`/`getTrades` 同款）。
+### 数据库
+- `db/support.sql`：`t_staff`（客服账号，初始 admin/password）+ `t_support_ticket`（工单），需在 SQL Server 执行
 
 ### 后端
-| 文件 | 改动 |
+| 文件 | 说明 |
 |------|------|
-| `dto/PurchaseDTO.java` | 新增 `@NotBlank accountNumber` |
-| `dto/RedeemDTO.java` | 新增 `@NotBlank accountNumber` |
-| `service/FinancialService.java` | `listHoldings(String accountNumber)` |
-| `service/impl/FinancialServiceImpl.java` | 新增 `validateAccountAccess(accountNumber)`：有 account token 必须相等；有 userId 校验 `account.userId` 归属；否则 `NO_LOGIN`；`purchase`/`redeem` 改用 DTO 卡号，`listHoldings` 显式传卡号 |
-| `controller/FinancialController.java` | `/financial/holdings` 改 `@RequestParam String accountNumber` |
+| `entity/Staff.java` / `SupportTicket.java` + Mapper | 客服账号 / 工单实体 |
+| `service/CustomerSupportService(Impl)` | 客服登录、用户提交工单、我的工单、客服受理/回复/关闭（状态机 0待处理→1处理中→2已回复→3已关闭） |
+| `controller/SupportController.java` | `/support/login`、`/support/ticket`、`/support/tickets`、`/support/admin/**` |
+| `LoginContext` + `JwtAuthenticationFilter` | 新增 `S_` 前缀 token → `LoginContext.setStaffId`，区分客服身份 |
 
 ### 前端
-| 文件 | 改动 |
-|------|------|
-| `api/financial.js` | `listHoldings(accountNumber)`；purchase/redeem 请求体带 `accountNumber` |
-| `components/ProductList.vue` | 新增 `accountNumber` prop，购买时传入 |
-| `components/MyHoldings.vue` | 新增 `accountNumber` prop，列表/赎回时传入 |
-| `views/CardTrade.vue` | `:account-number="accountNumber"`（路由当前卡） |
-| `views/Dashboard.vue` | `:account-number="userInfo?.accountNumber"` |
+- `api/support.js`：全部客服接口
+- `views/SupportLogin.vue`（`/support/login`）+ `views/SupportDashboard.vue`（`/support` 客服工作台：状态 tab、受理/回复/关闭）
+- `components/SupportCenter.vue`：账户中心「客服/投诉」快捷卡片弹窗（提交工单 + 我的工单状态）
+- `Dashboard.vue` 快捷操作新增「客服/投诉」入口
 
 ### 验证
-- 前端 `npm run build` ✅
-- 后端需在 IDEA（JDK 17）编译运行验证
+- 后端 `mvn compile` ✅、前端 `npm run build` ✅
+- 使用前需执行 `db/support.sql` 建表 + 初始化客服账号（admin / password）
 
 ---
 
@@ -177,79 +254,6 @@
 - IDEA 运行配置（`BankFinanceApplication`）中已配置 `API_KEY=sk-xxxx`（敏感信息脱敏，请勿提交真实 key）
 - `application.yml` 的 `ai.api-key: ${API_KEY:}` 启动时读取环境变量，无 key 则空串 → 走 mock
 - `AiProperties.apiKey` 默认值 `""` 仅为兜底，实际由 yml 覆盖
-
----
-
-## 2026-07-30 · 前端 AI 对话（ChatBot）与后端 SSE 对接
-
-### 后端
-| 文件 | 改动 |
-|------|------|
-| `controller/AiController.java` | 新增 `POST /ai/chat/stream`（SSE，SseEmitter，120s 超时） |
-| `service/AiService.java` | 新增 `chatStream(String, SseEmitter)` |
-| `service/impl/AiServiceImpl.java` | HttpURLConnection 调 DeepSeek `/chat/completions`（stream=true），逐 chunk 发 SSE（`event: message` / `event: done`），无 key 时 mock 兜底 |
-| `config/AiProperties.java` | 新增，绑定 `ai.*` 配置 |
-| `resources/application.yml` | 新增 `ai.api-key / model / base-url` |
-
-### 前端
-- `components/ChatBot.vue`：fetch `ReadableStream` 流式渲染回复
-
----
-
-## 2026-07-29 · 用户与银行卡分离体系（一人多卡）
-
-### 核心改动
-| 模块 | 说明 |
-|------|------|
-| 后端 | token 前缀 `U_` → `LoginContext.setUserId`；普通 token → `getAccount` |
-| 后端 `GET /user/info` | 新增 `UserVO(id, userPhone, userIdCard)` |
-| 后端 `getAccountBalance` / `/account/trades` | 支持 U_ token + 显式 `accountNumber` 参数，校验归属（`getUserId` 匹配） |
-| 前端 `UserDashboard.vue` | `Promise.all(getUserInfo(), getUserAccounts())` 并行加载；新增「注册新卡」dialog；row-click 跳转交易界面 |
-| 前端 `CardTrade.vue` | 重写为完整卡片交易界面（侧边栏、余额卡、快捷操作、全部弹窗、「切换银行卡」） |
-| 前端 `Deposit/Withdraw/Transfer` | 新增 `accountNumber` prop 预填表单 |
-| 前端 `TradeRecords` | 新增 `accountNumber` prop，非 admin 也能按卡查 |
-| 路由 | 新增 `/trade/:accountNumber` |
-
-### 隐藏卡号登录入口
-- `Login.vue`：删除 `goUserLogin`
-- `Register.vue`：删除 footer 链接
-- `router/index.js`：根路径 `/` 重定向 `/user/login`
-
-### 密码修复
-- `t_user` 19912349999 明文密码 → BCrypt 哈希
-- `PasswordMigrationRunner` 扩展为同时迁移 Account / User 明文密码
-
-### 身份证脱敏
-- 数据库 13 行 `t_account` 补齐 `user_id_card`
-- 前端 `maskIdCard`（前6位 + `********` + 后4位）用于 UserDashboard / Dashboard / BalanceQuery
-
-### 学习文档
-- 生成 `D:\javaproject\vueLearn\VueRouter入门与实践.md`（8 章节）
-
----
-
-## 2026-08-03 · 客服系统（工单/投诉处理）
-
-### 数据库
-- `db/support.sql`：`t_staff`（客服账号，初始 admin/password）+ `t_support_ticket`（工单），需在 SQL Server 执行
-
-### 后端
-| 文件 | 说明 |
-|------|------|
-| `entity/Staff.java` / `SupportTicket.java` + Mapper | 客服账号 / 工单实体 |
-| `service/CustomerSupportService(Impl)` | 客服登录、用户提交工单、我的工单、客服受理/回复/关闭（状态机 0待处理→1处理中→2已回复→3已关闭） |
-| `controller/SupportController.java` | `/support/login`、`/support/ticket`、`/support/tickets`、`/support/admin/**` |
-| `LoginContext` + `JwtAuthenticationFilter` | 新增 `S_` 前缀 token → `LoginContext.setStaffId`，区分客服身份 |
-
-### 前端
-- `api/support.js`：全部客服接口
-- `views/SupportLogin.vue`（`/support/login`）+ `views/SupportDashboard.vue`（`/support` 客服工作台：状态 tab、受理/回复/关闭）
-- `components/SupportCenter.vue`：账户中心「客服/投诉」快捷卡片弹窗（提交工单 + 我的工单状态）
-- `Dashboard.vue` 快捷操作新增「客服/投诉」入口
-
-### 验证
-- 后端 `mvn compile` ✅、前端 `npm run build` ✅
-- 使用前需执行 `db/support.sql` 建表 + 初始化客服账号（admin / password）
 
 ---
 
@@ -365,6 +369,84 @@
 ### 验证
 - 前端 `npm run build` ✅
 - 后端需在 IDEA（JDK 17）编译验证
+
+---
+
+## 2026-07-30 · 前端 AI 对话（ChatBot）与后端 SSE 对接
+
+### 后端
+| 文件 | 改动 |
+|------|------|
+| `controller/AiController.java` | 新增 `POST /ai/chat/stream`（SSE，SseEmitter，120s 超时） |
+| `service/AiService.java` | 新增 `chatStream(String, SseEmitter)` |
+| `service/impl/AiServiceImpl.java` | HttpURLConnection 调 DeepSeek `/chat/completions`（stream=true），逐 chunk 发 SSE（`event: message` / `event: done`），无 key 时 mock 兜底 |
+| `config/AiProperties.java` | 新增，绑定 `ai.*` 配置 |
+| `resources/application.yml` | 新增 `ai.api-key / model / base-url` |
+
+### 前端
+- `components/ChatBot.vue`：fetch `ReadableStream` 流式渲染回复
+
+---
+
+## 2026-07-30 · 修复：理财操作显式传 accountNumber（用户-卡分离兼容）
+
+**问题**：用户-卡分离后登录 token 为 `U_<userId>`，`LoginInterceptor` 只设 `userId` 不设 `account`；理财 `purchase`/`listHoldings`/`redeem` 读 `LoginContext.getAccount()` 恒为 null → 抛 `NO_LOGIN`，前端购买/持仓/赎回全部失败。
+
+**方案**：理财操作显式传 `accountNumber`（前端当前选中卡），后端归属校验（与 `getAccountBalance`/`getTrades` 同款）。
+
+### 后端
+| 文件 | 改动 |
+|------|------|
+| `dto/PurchaseDTO.java` | 新增 `@NotBlank accountNumber` |
+| `dto/RedeemDTO.java` | 新增 `@NotBlank accountNumber` |
+| `service/FinancialService.java` | `listHoldings(String accountNumber)` |
+| `service/impl/FinancialServiceImpl.java` | 新增 `validateAccountAccess(accountNumber)`：有 account token 必须相等；有 userId 校验 `account.userId` 归属；否则 `NO_LOGIN`；`purchase`/`redeem` 改用 DTO 卡号，`listHoldings` 显式传卡号 |
+| `controller/FinancialController.java` | `/financial/holdings` 改 `@RequestParam String accountNumber` |
+
+### 前端
+| 文件 | 改动 |
+|------|------|
+| `api/financial.js` | `listHoldings(accountNumber)`；purchase/redeem 请求体带 `accountNumber` |
+| `components/ProductList.vue` | 新增 `accountNumber` prop，购买时传入 |
+| `components/MyHoldings.vue` | 新增 `accountNumber` prop，列表/赎回时传入 |
+| `views/CardTrade.vue` | `:account-number="accountNumber"`（路由当前卡） |
+| `views/Dashboard.vue` | `:account-number="userInfo?.accountNumber"` |
+
+### 验证
+- 前端 `npm run build` ✅
+- 后端需在 IDEA（JDK 17）编译运行验证
+
+---
+
+## 2026-07-29 · 用户与银行卡分离体系（一人多卡）
+
+### 核心改动
+| 模块 | 说明 |
+|------|------|
+| 后端 | token 前缀 `U_` → `LoginContext.setUserId`；普通 token → `getAccount` |
+| 后端 `GET /user/info` | 新增 `UserVO(id, userPhone, userIdCard)` |
+| 后端 `getAccountBalance` / `/account/trades` | 支持 U_ token + 显式 `accountNumber` 参数，校验归属（`getUserId` 匹配） |
+| 前端 `UserDashboard.vue` | `Promise.all(getUserInfo(), getUserAccounts())` 并行加载；新增「注册新卡」dialog；row-click 跳转交易界面 |
+| 前端 `CardTrade.vue` | 重写为完整卡片交易界面（侧边栏、余额卡、快捷操作、全部弹窗、「切换银行卡」） |
+| 前端 `Deposit/Withdraw/Transfer` | 新增 `accountNumber` prop 预填表单 |
+| 前端 `TradeRecords` | 新增 `accountNumber` prop，非 admin 也能按卡查 |
+| 路由 | 新增 `/trade/:accountNumber` |
+
+### 隐藏卡号登录入口
+- `Login.vue`：删除 `goUserLogin`
+- `Register.vue`：删除 footer 链接
+- `router/index.js`：根路径 `/` 重定向 `/user/login`
+
+### 密码修复
+- `t_user` 19912349999 明文密码 → BCrypt 哈希
+- `PasswordMigrationRunner` 扩展为同时迁移 Account / User 明文密码
+
+### 身份证脱敏
+- 数据库 13 行 `t_account` 补齐 `user_id_card`
+- 前端 `maskIdCard`（前6位 + `********` + 后4位）用于 UserDashboard / Dashboard / BalanceQuery
+
+### 学习文档
+- 生成 `D:\javaproject\vueLearn\VueRouter入门与实践.md`（8 章节）
 
 ---
 

@@ -1,11 +1,14 @@
 package com.bank.bankfinance.controller;
 
 import com.bank.bankfinance.common.result.Result;
+import com.bank.bankfinance.dto.support.IdCardEnrollDTO;
 import com.bank.bankfinance.dto.support.StaffLoginDTO;
 import com.bank.bankfinance.dto.support.StaffRegisterDTO;
 import com.bank.bankfinance.dto.support.TicketReplyDTO;
 import com.bank.bankfinance.dto.support.TicketSubmitDTO;
 import com.bank.bankfinance.service.CustomerSupportService;
+import com.bank.bankfinance.service.IdCardLibService;
+import com.bank.bankfinance.vo.IdCardLibVO;
 import com.bank.bankfinance.vo.SupportLoginVO;
 import com.bank.bankfinance.vo.SupportTicketVO;
 import jakarta.validation.Valid;
@@ -20,6 +23,20 @@ public class SupportController {
 
     @Autowired
     private CustomerSupportService customerSupportService;
+
+    @Autowired
+    private IdCardLibService idCardLibService;
+
+    @PostMapping("/admin/idcard/enroll")
+    public Result<Void> enrollIdCard(@Valid @RequestBody IdCardEnrollDTO dto) {
+        idCardLibService.enroll(dto);
+        return Result.success();
+    }
+
+    @GetMapping("/admin/idcard/list")
+    public Result<List<IdCardLibVO>> listIdCardLib() {
+        return Result.success(idCardLibService.listAll());
+    }
 
     @PostMapping("/login")
     public Result<SupportLoginVO> staffLogin(@Valid @RequestBody StaffLoginDTO dto) {

@@ -2,7 +2,7 @@
   <div class="balance-query">
     <div class="section-top">
       <div class="section-top-left">
-        <el-icon :size="20" color="#1a3a6b"><Wallet /></el-icon>
+        <el-icon :size="20" color="#5a4420"><Wallet /></el-icon>
         <h3>余额查询</h3>
       </div>
     </div>
@@ -252,7 +252,7 @@ onMounted(() => { handleQuery() })
 .bar-value { font-size: 11px; color: #333; margin-bottom: 4px; font-weight: 600; }
 .bar-fill {
   width: 60%;
-  background: linear-gradient(180deg, #1a3a6b, #2d5a8c);
+  background: linear-gradient(180deg, #5a4420, #2d5a8c);
   border-radius: 6px 6px 0 0;
   transition: height 0.4s;
 }

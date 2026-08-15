@@ -21,4 +21,5 @@ public interface UserService extends IService<User> {
     void updatePsw(Long userId, UserUpdatePsdDTO userUpdatePsdDTO);
     void bindFace(Long userId, String base64Image);
     FaceVerifyResult verifyFace(Long userId, String base64Image);
+    FaceVerifyResult verifyRealName(Long userId, String base64Image);
 }

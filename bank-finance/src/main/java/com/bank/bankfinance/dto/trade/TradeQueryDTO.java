@@ -15,6 +15,10 @@ public class TradeQueryDTO {
     //页号
     Integer page = 1;
 
+    String type;
 
+    String startDate;
+
+    String endDate;
     TradeQueryDTO(){}
 }

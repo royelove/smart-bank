@@ -29,8 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.bank.bankfinance.common.constant.ResponseCode.NO_LOGIN;
-import static com.bank.bankfinance.common.constant.ResponseCode.NO_ADMIN_PERMISSION;
+import static com.bank.bankfinance.common.constant.ResponseCode.*;
 
 @Service
 public class CustomerSupportServiceImpl extends ServiceImpl<SupportTicketMapper, SupportTicket>
@@ -63,7 +62,7 @@ public class CustomerSupportServiceImpl extends ServiceImpl<SupportTicketMapper,
         Staff staff = staffMapper.selectOne(new LambdaQueryWrapper<Staff>()
                 .eq(Staff::getUsername, dto.getUsername()));
         if (staff == null || !passwordEncoder.matches(dto.getPassword(), staff.getPassword())) {
-            throw new RuntimeException("账号或密码错误");
+            throw new BusinessException(SUPPORT_LOGIN_ERROR);
         }
         String token = jwtUtil.generateToken("S_" + staff.getId());
         return new SupportLoginVO(token, staff.getStaffName());
@@ -90,7 +89,7 @@ public class CustomerSupportServiceImpl extends ServiceImpl<SupportTicketMapper,
     @Override
     public void submitTicket(TicketSubmitDTO dto) {
         if (!CATEGORIES.contains(dto.getCategory())) {
-            throw new RuntimeException("无效的问题类型");
+            throw new BusinessException(TICKET_TYPE_INVALID);
         }
         String accountNumber = dto.getAccountNumber();
         if (accountNumber == null || accountNumber.isEmpty()) {
@@ -165,7 +164,7 @@ public class CustomerSupportServiceImpl extends ServiceImpl<SupportTicketMapper,
         Staff staff = currentStaff();
         SupportTicket ticket = requireTicket(ticketId);
         if (ticket.getStatus() != STATUS_PENDING) {
-            throw new RuntimeException("该工单已被受理");
+            throw new BusinessException(TICKET_ALREADY_ACCEPTED);
         }
         ticket.setStatus(STATUS_PROCESSING);
         ticket.setHandlerId(staff.getId());
@@ -178,7 +177,7 @@ public class CustomerSupportServiceImpl extends ServiceImpl<SupportTicketMapper,
         Staff staff = currentStaff();
         SupportTicket ticket = requireTicket(dto.getTicketId());
         if (ticket.getStatus() == STATUS_CLOSED) {
-            throw new RuntimeException("工单已关闭，无法回复");
+            throw new BusinessException(TICKET_CLOSED_REPLY);
         }
         ticket.setReply(dto.getReply());
         ticket.setStatus(STATUS_REPLIED);
@@ -194,7 +193,7 @@ public class CustomerSupportServiceImpl extends ServiceImpl<SupportTicketMapper,
         currentStaff();
         SupportTicket ticket = requireTicket(ticketId);
         if (ticket.getStatus() == STATUS_CLOSED) {
-            throw new RuntimeException("工单已关闭");
+            throw new BusinessException(TICKET_CLOSED);
         }
         ticket.setStatus(STATUS_CLOSED);
         ticket.setCloseDate(LocalDateTime.now());
@@ -217,7 +216,7 @@ public class CustomerSupportServiceImpl extends ServiceImpl<SupportTicketMapper,
     private SupportTicket requireTicket(Long ticketId) {
         SupportTicket ticket = this.getById(ticketId);
         if (ticket == null) {
-            throw new RuntimeException("工单不存在");
+            throw new BusinessException(TICKET_NOT_FOUND);
         }
         return ticket;
     }

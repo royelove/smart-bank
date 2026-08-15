@@ -1,9 +1,9 @@
 spring:
   datasource:
-    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
-    url: jdbc:sqlserver://127.0.0.1:1433;DatabaseName=t_bank;encrypt=true;trustServerCertificate=true
-    username: sa
-    password: Dzc@493948055
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3307/t_bank?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: ${DB_PASSWORD:}
   data:
     redis:
       host: localhost
@@ -19,16 +19,32 @@ spring:
       write-dates-as-timestamps: false
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: admin
+    password: ${RABBIT_PASSWORD:}
+    virtual-host: /
+    listener:
+      simple:
+        concurrency: 2
+        max-concurrency: 4
+        prefetch: 10
+        acknowledge-mode: auto
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
 
 mybatis-plus:
   mapper-locations: classpath:mapper/**/*.xml
   type-aliases-package: com.bank.bankfinance.entity
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
 
 jwt:
-  secret: ${JWT_SECRET:defaultFallbackSecret}
+  secret: ${JWT_SECRET:smartBankJwtSecretKeyAtLeast32BytesLong!2026}
   expiration: 86400000
 
 springdoc:
@@ -53,4 +69,8 @@ ai:
 face:
   base-url: http://localhost:8001
   timeout-ms: 30000
+
+# 股票行情源:simulated=模拟行情(默认) | sina=新浪真实行情(预留)
+stock:
+  quote-provider: simulated
 

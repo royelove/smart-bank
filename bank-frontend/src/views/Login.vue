@@ -3,28 +3,30 @@
     <!-- Left: Branding & Atmosphere -->
     <div class="login-brand">
       <div class="brand-overlay"></div>
+      <div class="brand-vaultline"></div>
       <div class="brand-content">
         <div class="brand-logo">
+          <div class="brand-mark"></div>
           <h1 class="brand-title">钱钱银行</h1>
           <p class="brand-subtitle">SMART BANKING</p>
         </div>
         <div class="brand-features">
           <div class="feature-item">
-            <div class="feature-icon"><el-icon :size="22" color="#f5af19"><Lock /></el-icon></div>
+            <div class="feature-icon"><el-icon :size="22" color="var(--vault-accent)"><Lock /></el-icon></div>
             <div class="feature-text">
               <span class="feature-label">安全可靠</span>
               <span class="feature-desc">256位加密传输，保障资金安全</span>
             </div>
           </div>
           <div class="feature-item">
-            <div class="feature-icon"><el-icon :size="22" color="#f5af19"><Lightning /></el-icon></div>
+            <div class="feature-icon"><el-icon :size="22" color="var(--vault-accent)"><Lightning /></el-icon></div>
             <div class="feature-text">
               <span class="feature-label">极速到账</span>
               <span class="feature-desc">7×24小时实时转账，秒级到账</span>
             </div>
           </div>
           <div class="feature-item">
-            <div class="feature-icon"><el-icon :size="22" color="#f5af19"><Service /></el-icon></div>
+            <div class="feature-icon"><el-icon :size="22" color="var(--vault-accent)"><Service /></el-icon></div>
             <div class="feature-text">
               <span class="feature-label">智能服务</span>
               <span class="feature-desc">AI智能客服，全天候在线服务</span>
@@ -36,16 +38,17 @@
           <p>© 2026 钱钱银行 版权所有</p>
         </div>
       </div>
-      <!-- Animated particles -->
-      <div class="particles">
-        <span v-for="i in 20" :key="i" class="particle" :style="particleStyle(i)"></span>
-      </div>
     </div>
 
     <!-- Right: Login Form -->
     <div class="login-form-wrap">
-      <div class="form-container">
+      <div class="form-container vault-panel">
+        <div class="vault-contour"></div>
         <div class="form-header">
+          <div class="form-status">
+            <span class="vault-status-dot"></span>
+            <span class="form-status-text">SECURE CHANNEL</span>
+          </div>
           <div class="form-welcome">
             <h2>欢迎登录</h2>
             <p>请使用您的账户信息登录</p>
@@ -62,7 +65,7 @@
               clearable
             >
               <template #prefix>
-                <el-icon color="#1a3a6b"><User /></el-icon>
+                <el-icon color="var(--vault-accent)"><User /></el-icon>
               </template>
             </el-input>
           </div>
@@ -79,7 +82,7 @@
               @input="loginForm.password = loginForm.password.replace(/\D/g, '')"
             >
               <template #prefix>
-                <el-icon color="#1a3a6b"><Lock /></el-icon>
+                <el-icon color="var(--vault-accent)"><Lock /></el-icon>
               </template>
             </el-input>
           </div>
@@ -103,7 +106,7 @@
             <span class="divider">|</span>
           </div>
           <div class="safe-tip">
-            <el-icon :size="14" color="#52c41a"><SuccessFilled /></el-icon>
+            <el-icon :size="14" color="var(--vault-up)"><SuccessFilled /></el-icon>
             <span>本次登录环境安全</span>
           </div>
         </div>
@@ -153,28 +156,10 @@ const goRegister = () => {
 const goForgotPassword = () => {
   router.push('/forgot-password')
 }
-
-const particleStyle = (i) => {
-  const left = Math.random() * 100
-  const delay = Math.random() * 8
-  const duration = 6 + Math.random() * 8
-  const size = 2 + Math.random() * 4
-  return {
-    left: `${left}%`,
-    width: `${size}px`,
-    height: `${size}px`,
-    animationDelay: `${delay}s`,
-    animationDuration: `${duration}s`
-  }
-}
 </script>
 
 <style scoped>
-.login-page {
-  display: flex;
-  min-height: 100vh;
-  background: #0a1628;
-}
+.login-page { display: flex; min-height: 100vh; background: var(--vault-bg); }
 
 /* ===== LEFT BRAND ===== */
 .login-brand {
@@ -184,9 +169,9 @@ const particleStyle = (i) => {
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(ellipse at 20% 50%, rgba(26,58,107,0.6) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 20%, rgba(245,175,25,0.08) 0%, transparent 50%),
-    linear-gradient(180deg, #0c1a3b 0%, #0a1628 50%, #1a2a4a 100%);
+    radial-gradient(ellipse at 20% 50%, rgba(58,44,20,0.55) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(212,176,106,0.08) 0%, transparent 50%),
+    linear-gradient(180deg, #0c1420 0%, #0a0e16 50%, #101a2c 100%);
   overflow: hidden;
 }
 
@@ -198,9 +183,18 @@ const particleStyle = (i) => {
       0deg,
       transparent,
       transparent 2px,
-      rgba(255,255,255,0.015) 2px,
-      rgba(255,255,255,0.015) 4px
+      rgba(212,176,106,0.015) 2px,
+      rgba(212,176,106,0.015) 4px
     );
+  pointer-events: none;
+}
+
+.brand-vaultline {
+  position: absolute;
+  top: 0; bottom: 0; right: -1px;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, var(--vault-line-hover) 30%, var(--vault-line-hover) 70%, transparent);
+  opacity: 0.6;
   pointer-events: none;
 }
 
@@ -212,21 +206,37 @@ const particleStyle = (i) => {
 }
 
 .brand-logo { margin-bottom: 48px; }
-
-.brand-title {
-  font-size: 42px;
-  font-weight: 900;
-  color: #fff;
-  letter-spacing: 6px;
-  margin-bottom: 8px;
-  text-shadow: 0 2px 20px rgba(0,0,0,0.3);
+.brand-mark {
+  width: 72px; height: 72px;
+  margin: 0 auto 22px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #e6c98a, #b08d4a);
+  box-shadow: 0 0 40px var(--vault-accent-glow), inset 0 1px 0 rgba(255,255,255,0.35);
+  display: flex; align-items: center; justify-content: center;
 }
-
+.brand-mark::after {
+  content: '钱';
+  font-size: 34px; font-weight: 900; color: #231a08;
+  text-shadow: none;
+}
+.brand-title {
+  font-size: 44px;
+  font-weight: 900;
+  color: var(--vault-text);
+  letter-spacing: 8px;
+  margin-bottom: 10px;
+  background: linear-gradient(180deg, #ffffff 0%, var(--vault-gold) 130%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 16px rgba(212,176,106,0.28));
+}
 .brand-subtitle {
   font-size: 14px;
-  color: rgba(245,175,25,0.7);
+  color: var(--vault-accent);
   letter-spacing: 10px;
   font-weight: 500;
+  opacity: 0.85;
 }
 
 .brand-features {
@@ -237,84 +247,37 @@ const particleStyle = (i) => {
   margin: 0 auto 48px;
   text-align: left;
 }
-
 .feature-item {
   display: flex;
   align-items: center;
   gap: 16px;
   padding: 16px 20px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(212,176,106,0.03);
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.06);
-  backdrop-filter: blur(10px);
+  border: 1px solid var(--vault-line);
   transition: all 0.3s;
 }
 .feature-item:hover {
-  background: rgba(255,255,255,0.08);
+  background: rgba(212,176,106,0.06);
+  border-color: var(--vault-line-hover);
   transform: translateX(4px);
 }
-
 .feature-icon {
   width: 44px;
   height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(245,175,25,0.1);
+  background: rgba(212,176,106,0.1);
   border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
   flex-shrink: 0;
 }
-
-.feature-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.feature-label {
-  font-size: 15px;
-  font-weight: 600;
-  color: #fff;
-}
-.feature-desc {
-  font-size: 12px;
-  color: rgba(255,255,255,0.5);
-}
-
-.brand-footer {
-  text-align: center;
-}
-.brand-footer p {
-  font-size: 12px;
-  color: rgba(255,255,255,0.3);
-  line-height: 1.6;
-}
-
-/* ===== PARTICLES ===== */
-.particles {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.particle {
-  position: absolute;
-  bottom: -10px;
-  background: rgba(245,175,25,0.4);
-  border-radius: 50%;
-  animation: floatUp linear infinite;
-}
-
-@keyframes floatUp {
-  0% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-100vh) scale(0);
-    opacity: 0;
-  }
-}
+.feature-text { display: flex; flex-direction: column; gap: 2px; }
+.feature-label { font-size: 15px; font-weight: 600; color: #f5ecd8; }
+.feature-desc { font-size: 12px; color: var(--vault-text-3); }
+.brand-footer { text-align: center; }
+.brand-footer p { font-size: 12px; color: var(--vault-text-dim); line-height: 1.6; }
 
 /* ===== RIGHT FORM ===== */
 .login-form-wrap {
@@ -324,111 +287,63 @@ const particleStyle = (i) => {
   align-items: center;
   justify-content: center;
   padding: 40px;
-  background: #fff;
+  background: radial-gradient(800px 500px at 50% -20%, rgba(212,176,106,0.05), transparent 60%), var(--vault-graphite);
+  border-left: 1px solid var(--vault-line);
 }
 
 .form-container {
+  position: relative;
   width: 100%;
   max-width: 400px;
+  padding: 36px;
 }
+.form-status { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.form-status-text { font-size: 11px; color: var(--vault-text-3); letter-spacing: 0.2em; }
+.form-header { margin-bottom: 28px; position: relative; }
+.form-welcome h2 { font-size: 26px; font-weight: 700; color: var(--vault-text); letter-spacing: 0.1em; margin-bottom: 6px; }
+.form-welcome p { font-size: 14px; color: var(--vault-text-3); }
 
-.form-header {
-  margin-bottom: 36px;
-}
-
-.form-welcome h2 {
-  font-size: 28px;
-  font-weight: 700;
-  color: #0c1a3b;
-  margin-bottom: 6px;
-}
-
-.form-welcome p {
-  font-size: 14px;
-  color: #999;
-}
-
-.input-group {
-  margin-bottom: 22px;
-}
-
-.input-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 6px;
-}
+.input-group { margin-bottom: 22px; }
+.input-label { display: block; font-size: 13px; font-weight: 600; color: var(--vault-text-2); margin-bottom: 6px; letter-spacing: 0.05em; }
 
 .login-form :deep(.el-input__wrapper) {
   height: 48px;
   border-radius: 10px !important;
-  box-shadow: 0 0 0 1px #e0e4ea !important;
+  box-shadow: 0 0 0 1px var(--vault-line-strong) !important;
   padding: 0 12px;
+  background: rgba(8,12,20,0.6);
 }
-
 .login-form :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 2px #1a3a6b !important;
+  box-shadow: 0 0 0 1px var(--vault-accent), 0 0 14px rgba(212,176,106,0.2) !important;
 }
-
-.login-form :deep(.el-input__inner) {
-  font-size: 15px;
-}
-
-.login-form :deep(.el-input__prefix) {
-  margin-right: 8px;
-}
+.login-form :deep(.el-input__inner) { font-size: 15px; color: var(--vault-text); }
+.login-form :deep(.el-input__prefix) { margin-right: 8px; }
 
 .login-btn {
   width: 100%;
   height: 50px;
-  background: linear-gradient(135deg, #1a3a6b, #2d5a8c) !important;
+  background: linear-gradient(135deg, #b08d4a, #d4b06a) !important;
   border: none;
   font-size: 17px;
   font-weight: 600;
   letter-spacing: 4px;
   border-radius: 10px;
   margin-top: 8px;
+  box-shadow: 0 0 22px rgba(212,176,106,0.2), inset 0 0 0 1px rgba(255,255,255,0.08);
   transition: all 0.3s;
 }
-
 .login-btn:hover {
-  background: linear-gradient(135deg, #2d5a8c, #3a6a9c) !important;
+  background: linear-gradient(135deg, #c9a458, #e6c98a) !important;
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(26, 58, 107, 0.3);
+  box-shadow: 0 8px 28px rgba(212,176,106,0.35);
 }
 
-.form-footer {
-  margin-top: 28px;
-  text-align: center;
-}
-
-.form-links {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.link {
-  font-size: 13px;
-  color: #1a3a6b;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-.link:hover { color: #f5af19; }
-
-.divider { color: #d0d5de; font-size: 12px; }
-
-.safe-tip {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #999;
-}
+.form-footer { margin-top: 28px; text-align: center; }
+.form-links { display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 16px; }
+.link { font-size: 13px; color: var(--vault-accent); cursor: pointer; transition: color 0.2s; }
+.link:hover { color: #e6c98a; text-shadow: 0 0 10px rgba(212,176,106,0.5); }
+.divider { color: var(--vault-line-strong); font-size: 12px; }
+.safe-tip { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; color: var(--vault-text-3); }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 900px) {
@@ -437,7 +352,8 @@ const particleStyle = (i) => {
   .login-form-wrap {
     width: 100%;
     min-width: unset;
-    padding: 60px 24px;
+    padding: 40px 24px;
+    border-left: none;
   }
 }
 </style>

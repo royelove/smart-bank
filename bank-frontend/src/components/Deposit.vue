@@ -4,7 +4,7 @@
     <div v-if="step === 'input'" class="atm-step">
       <div class="atm-step-header">
         <div class="atm-icon">
-          <el-icon :size="28" color="#1a3a6b"><Coin /></el-icon>
+          <el-icon :size="28" color="var(--vault-accent)"><Coin /></el-icon>
         </div>
         <div>
           <h3 class="atm-step-title">存款</h3>
@@ -37,7 +37,7 @@
       </el-form>
 
       <div class="atm-actions">
-        <el-button size="large" class="atm-btn-primary" @click="showPasswordDialog">
+        <el-button size="large" class="atm-btn-primary"  @click = "showPasswordDialog">
           下一步
         </el-button>
       </div>
@@ -47,7 +47,7 @@
     <div v-if="step === 'confirm'" class="atm-step">
       <div class="atm-step-header">
         <div class="atm-icon confirm-icon">
-          <el-icon :size="28" color="#e6a23c"><Warning /></el-icon>
+          <el-icon :size="28" color="var(--vault-gold)"><Warning /></el-icon>
         </div>
         <div>
           <h3 class="atm-step-title">确认存款信息</h3>
@@ -76,8 +76,8 @@
     <div v-if="step === 'result'" class="atm-step">
       <div class="result-display" :class="resultType">
         <div class="result-icon">
-          <el-icon :size="48" v-if="resultType === 'success'" color="#52c41a"><CircleCheck /></el-icon>
-          <el-icon :size="48" v-else color="#f56c6c"><CircleClose /></el-icon>
+          <el-icon :size="48" v-if="resultType === 'success'" color="var(--vault-up)"><CircleCheck /></el-icon>
+          <el-icon :size="48" v-else color="var(--vault-down)"><CircleClose /></el-icon>
         </div>
         <h3 class="result-title">{{ resultType === 'success' ? '存款成功' : '存款失败' }}</h3>
         <p class="result-msg">{{ resultMsg }}</p>
@@ -147,7 +147,7 @@ const handlePasswordConfirm = async (pwd) => {
 
 const doDeposit = async () => {
   try {
-    await deposit({ accountNo: form.accountNo, amount: form.amount, password: password.value })
+    await deposit({ accountNo: form.accountNo, amount: form.amount, password: password.value,requestId : crypto.randomUUID()})
     if (refreshBalance) refreshBalance()
     emit('refresh')
     tradeTime.value = new Date().toLocaleString('zh-CN', { hour12: false })
@@ -176,168 +176,62 @@ const closePanel = () => {
 </script>
 
 <style scoped>
-.atm-container {
-  width: 100%;
-  max-width: 480px;
-}
-
-.atm-step {
-  animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.atm-step-header {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #f0f2f5;
-}
-
+.atm-container { width: 100%; max-width: 480px; }
+.atm-step { animation: fadeIn 0.3s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.atm-step-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--vault-line); }
 .atm-icon {
-  width: 48px;
-  height: 48px;
-  background: #e8f0fe;
+  width: 48px; height: 48px;
+  background: rgba(212,176,106,0.1);
+  border: 1px solid var(--vault-line);
   border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
-
-.confirm-icon { background: #fdf6ec; }
-
-.atm-step-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-}
-.atm-step-desc {
-  margin: 2px 0 0;
-  font-size: 12px;
-  color: #999;
-}
-
+.confirm-icon { background: rgba(212,176,106,0.1); }
+.atm-step-title { margin: 0; font-size: 16px; font-weight: 600; color: var(--vault-text); }
+.atm-step-desc { margin: 2px 0 0; font-size: 12px; color: var(--vault-text-3); }
 .atm-form { max-width: 380px; }
-
 .form-row { margin-bottom: 20px; }
-.atm-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 6px;
-}
-
+.atm-label { display: block; font-size: 13px; font-weight: 600; color: var(--vault-text-2); margin-bottom: 6px; letter-spacing: 0.05em; }
 .atm-form :deep(.el-input__wrapper),
 .atm-form :deep(.el-input-number__increase),
-.atm-form :deep(.el-input-number__decrease) {
-  height: 46px;
-  border-radius: 10px !important;
-}
+.atm-form :deep(.el-input-number__decrease) { height: 46px; border-radius: 10px !important; }
 .atm-form .full-width { width: 100%; }
+.atm-form :deep(.el-input-number .el-input__wrapper) { padding-right: 50px; }
 
-.atm-form :deep(.el-input-number .el-input__wrapper) {
-  padding-right: 50px;
-}
-
-/* ===== Confirm Card ===== */
-.confirm-card {
-  background: #f8f9fc;
-  border-radius: 12px;
-  padding: 20px 24px;
-  margin-bottom: 24px;
-}
-
-.confirm-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #eee;
-}
+.confirm-card { background: rgba(8,12,20,0.5); border: 1px solid var(--vault-line); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; }
+.confirm-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--vault-line); }
 .confirm-row:last-child { border-bottom: none; }
-.confirm-label { font-size: 14px; color: #999; }
-.confirm-value { font-size: 15px; font-weight: 600; color: #333; }
-.confirm-value.highlight { color: #f56c6c; font-size: 18px; }
+.confirm-label { font-size: 14px; color: var(--vault-text-3); }
+.confirm-value { font-size: 15px; font-weight: 600; color: var(--vault-text); }
+.confirm-value.highlight { color: var(--vault-down); font-size: 18px; }
 
-/* ===== Result ===== */
-.result-display {
-  text-align: center;
-  padding: 20px 0;
-}
-
+.result-display { text-align: center; padding: 20px 0; }
 .result-icon { margin-bottom: 12px; }
-.result-title {
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-.result-display.success .result-title { color: #52c41a; }
-.result-display.error .result-title { color: #f56c6c; }
+.result-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.result-display.success .result-title { color: var(--vault-up); }
+.result-display.error .result-title { color: var(--vault-down); }
+.result-msg { font-size: 14px; color: var(--vault-text-2); margin-bottom: 20px; }
+.result-details { background: rgba(8,12,20,0.5); border: 1px solid var(--vault-line); border-radius: 12px; padding: 16px 20px; text-align: left; max-width: 360px; margin: 0 auto; }
+.detail-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: var(--vault-text-2); }
+.detail-row .highlight { color: var(--vault-down); font-weight: 600; }
 
-.result-msg {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 20px;
-}
-
-.result-details {
-  background: #f8f9fc;
-  border-radius: 12px;
-  padding: 16px 20px;
-  text-align: left;
-  max-width: 360px;
-  margin: 0 auto;
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  font-size: 14px;
-  color: #666;
-}
-.detail-row .highlight { color: #f56c6c; font-weight: 600; }
-
-/* ===== Actions ===== */
-.atm-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 24px;
-}
-
+.atm-actions { display: flex; gap: 12px; margin-top: 24px; }
 .atm-btn-primary {
-  flex: 1;
-  height: 46px;
-  background: linear-gradient(135deg, #1a3a6b, #2d5a8c);
-  border: none;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 600;
-  border-radius: 10px;
+  flex: 1; height: 46px;
+  background: linear-gradient(135deg, #b08d4a, #d4b06a);
+  border: none; color: #fff; font-size: 15px;
+  font-weight: 600; border-radius: 10px;
+  box-shadow: 0 0 18px rgba(212,176,106,0.2), inset 0 0 0 1px rgba(255,255,255,0.08);
 }
-.atm-btn-primary:hover { background: linear-gradient(135deg, #2d5a8c, #3a6a9c); }
-
+.atm-btn-primary:hover { background: linear-gradient(135deg, #c9a458, #e6c98a); }
 .atm-btn-secondary {
-  flex: 1;
-  height: 46px;
-  border: 1px solid #d0d5de;
-  background: #fff;
-  color: #666;
-  font-size: 15px;
-  font-weight: 500;
-  border-radius: 10px;
+  flex: 1; height: 46px;
+  border: 1px solid var(--vault-line); background: rgba(212,176,106,0.04);
+  color: var(--vault-text-2); font-size: 15px; font-weight: 500; border-radius: 10px;
 }
-.atm-btn-secondary:hover { border-color: #1a3a6b; color: #1a3a6b; }
+.atm-btn-secondary:hover { border-color: var(--vault-line-hover); color: var(--vault-text); }
 
-@media (max-width: 480px) {
-  .atm-container { max-width: 100%; }
-}
+@media (max-width: 480px) { .atm-container { max-width: 100%; } }
 </style>

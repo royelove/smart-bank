@@ -56,7 +56,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public Result<?> handleRuntimeException(RuntimeException e) {
         log.error("运行时异常: ", e);
-        return Result.fail("999999", e.getMessage());
+        return Result.fail(ResponseCode.FAIL);
     }
 
     @ExceptionHandler(Exception.class)

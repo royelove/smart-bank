@@ -21,6 +21,8 @@ public class Account {
     private String accountHolderName;
     private String accountType;
     private BigDecimal accountBalance;
+    /** 冻结资金:股票买入委托占用的资金 */
+    private BigDecimal frozenBalance;
 
     //创建时，框架自动填充时间，无法修改
     @TableField(fill = FieldFill.INSERT)

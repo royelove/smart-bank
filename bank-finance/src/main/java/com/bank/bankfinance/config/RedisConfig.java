@@ -1,7 +1,9 @@
 package com.bank.bankfinance.config;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,7 +27,9 @@ public class RedisConfig {
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         return mapper;
     }
-
+    /*
+    该对象返回时要注册为Spring Bean
+     */
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory,
                                                        ObjectMapper objectMapper) {
@@ -45,7 +49,14 @@ public class RedisConfig {
         this.connectionFactory = connectionFactory
          */
         redisTemplate.setConnectionFactory(connectionFactory);
-        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+        // 开启默认类型信息:序列化时写入 @class,反序列化才能还原成原对象(如 Account/StockQuote),
+        // 否则读出来是 LinkedHashMap,强转会报 ClassCastException
+        ObjectMapper redisMapper = objectMapper.copy();
+        redisMapper.activateDefaultTyping(
+                redisMapper.getPolymorphicTypeValidator(),
+                DefaultTyping.NON_FINAL,
+                JsonTypeInfo.As.PROPERTY);
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(redisMapper);
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setValueSerializer(serializer);
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());

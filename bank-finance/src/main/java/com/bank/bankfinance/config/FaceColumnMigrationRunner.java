@@ -21,7 +21,7 @@ public class FaceColumnMigrationRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        ensureColumn("t_user", "face_feature", "NVARCHAR(MAX) NULL");
+        ensureColumn("t_user", "face_feature", "LONGTEXT NULL");
         ensureColumn("t_user", "face_bound", "INT DEFAULT 0");
     }
 

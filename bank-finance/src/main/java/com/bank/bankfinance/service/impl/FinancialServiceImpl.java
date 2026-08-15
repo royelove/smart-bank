@@ -2,6 +2,7 @@ package com.bank.bankfinance.service.impl;
 
 import com.bank.bankfinance.common.exception.BusinessException;
 import com.bank.bankfinance.common.util.LoginContext;
+import com.bank.bankfinance.common.util.RedisUtil;
 import com.bank.bankfinance.common.util.TicketNoUtil;
 import com.bank.bankfinance.dto.trade.PurchaseDTO;
 import com.bank.bankfinance.dto.trade.RedeemDTO;
@@ -31,6 +32,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.bank.bankfinance.common.constant.ResponseCode.*;
@@ -59,6 +61,9 @@ public class FinancialServiceImpl extends ServiceImpl<FinancialProductMapper, Fi
     @Autowired
     private RiskAssessmentService riskAssessmentService;
 
+    @Autowired
+    private RedisUtil redisUtil;
+
     @Override
     public List<FinancialProductVO> listProducts() {
         List<FinancialProduct> products = this.lambdaQuery()
@@ -80,58 +85,67 @@ public class FinancialServiceImpl extends ServiceImpl<FinancialProductMapper, Fi
     @Transactional
     @Override
     public void purchase(PurchaseDTO purchaseDTO) {
-        String accountNumber = purchaseDTO.getAccountNumber();
-        Account account = validateAccountAccess(accountNumber);
-        FinancialProduct product = financialProductMapper.selectById(purchaseDTO.getProductId());
-        if (product == null) {
-            throw new BusinessException(BANK_ID_INVALID);
+        Boolean first = redisUtil.setIfAbsent("idem:purchase:" + purchaseDTO.getRequestId(), "1", 10, TimeUnit.MINUTES);
+        if (!Boolean.TRUE.equals(first)) {
+            throw new BusinessException(IDEMPOTENT_REJECTED);
         }
-        if (product.getStatus() != 1) {
-            throw new BusinessException(TRANSACTION_INVALID_FREEZE);
-        }
-        BigDecimal amount = purchaseDTO.getAmount();
-        if (amount.compareTo(product.getMinAmount()) < 0) {
-            throw new BusinessException(TRANSACTION_INVALID_INSUFFICIENT);
-        }
-        if (amount.compareTo(product.getRemainingAmount()) > 0) {
-            throw new BusinessException(TRANSACTION_INVALID_INSUFFICIENT);
-        }
-        if (account.getAccountStatus() == 0) {
-            throw new BusinessException(TRANSACTION_INVALID_FREEZE);
-        }
-        if (amount.compareTo(account.getAccountBalance()) > 0) {
-            throw new BusinessException(TRANSACTION_INVALID_INSUFFICIENT);
-        }
-        if (!passwordEncoder.matches(purchaseDTO.getPassword(), account.getPassword())) {
-            throw new BusinessException(PASSWORD_INVALID);
-        }
-        riskAssessmentService.assessAndBlock(accountNumber, amount, null);
-        account.setAccountBalance(account.getAccountBalance().subtract(amount));
-        accountMapper.updateById(account);
-        product.setRemainingAmount(product.getRemainingAmount().subtract(amount));
-        financialProductMapper.updateById(product);
+        try {
+            String accountNumber = purchaseDTO.getAccountNumber();
+            Account account = validateAccountAccess(accountNumber);
+            FinancialProduct product = financialProductMapper.selectById(purchaseDTO.getProductId());
+            if (product == null) {
+                throw new BusinessException(BANK_ID_INVALID);
+            }
+            if (product.getStatus() != 1) {
+                throw new BusinessException(TRANSACTION_INVALID_FREEZE);
+            }
+            BigDecimal amount = purchaseDTO.getAmount();
+            if (amount.compareTo(product.getMinAmount()) < 0) {
+                throw new BusinessException(TRANSACTION_INVALID_INSUFFICIENT);
+            }
+            if (amount.compareTo(product.getRemainingAmount()) > 0) {
+                throw new BusinessException(TRANSACTION_INVALID_INSUFFICIENT);
+            }
+            if (account.getAccountStatus() == 0) {
+                throw new BusinessException(TRANSACTION_INVALID_FREEZE);
+            }
+            if (amount.compareTo(account.getAccountBalance()) > 0) {
+                throw new BusinessException(TRANSACTION_INVALID_INSUFFICIENT);
+            }
+            if (!passwordEncoder.matches(purchaseDTO.getPassword(), account.getPassword())) {
+                throw new BusinessException(PASSWORD_INVALID);
+            }
+            riskAssessmentService.assessAndBlock(accountNumber, amount, null);
+            account.setAccountBalance(account.getAccountBalance().subtract(amount));
+            accountMapper.updateById(account);
+            product.setRemainingAmount(product.getRemainingAmount().subtract(amount));
+            financialProductMapper.updateById(product);
 
-        FinancialHolding holding = new FinancialHolding();
-        holding.setAccountNumber(accountNumber);
-        holding.setProductId(product.getId());
-        holding.setProductName(product.getProductName());
-        holding.setAnnualReturnRate(product.getAnnualReturnRate());
-        holding.setTermDays(product.getTermDays());
-        holding.setInvestAmount(amount);
-        holding.setStatus(0);
-        holding.setPurchaseDate(LocalDateTime.now());
-        financialHoldingMapper.insert(holding);
+            FinancialHolding holding = new FinancialHolding();
+            holding.setAccountNumber(accountNumber);
+            holding.setProductId(product.getId());
+            holding.setProductName(product.getProductName());
+            holding.setAnnualReturnRate(product.getAnnualReturnRate());
+            holding.setTermDays(product.getTermDays());
+            holding.setInvestAmount(amount);
+            holding.setStatus(0);
+            holding.setPurchaseDate(LocalDateTime.now());
+            financialHoldingMapper.insert(holding);
 
-        Trade trade = new Trade();
-        trade.setTradeNo(TicketNoUtil.tradeNo());
-        trade.setFromAccount(accountNumber);
-        trade.setToAccount("理财购买");
-        trade.setAmount(amount);
-        trade.setTradeType("理财购买");
-        LocalDateTime now = LocalDateTime.now();
-        trade.setTradeDate(now);
-        trade.setUpdateDate(now);
-        tradeService.saveTrade(trade);
+            Trade trade = new Trade();
+            trade.setTradeNo(TicketNoUtil.tradeNo());
+            trade.setFromAccount(accountNumber);
+            trade.setToAccount("理财购买");
+            trade.setAmount(amount);
+            trade.setTradeType("理财购买");
+            LocalDateTime now = LocalDateTime.now();
+            trade.setTradeDate(now);
+            trade.setUpdateDate(now);
+            tradeService.saveTrade(trade);
+        } catch (Exception e) {
+            redisUtil.delete("idem:purchase:" + purchaseDTO.getRequestId());
+            throw e;
+        }
     }
 
     @Override

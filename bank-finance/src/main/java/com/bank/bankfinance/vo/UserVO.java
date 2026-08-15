@@ -11,4 +11,6 @@ public class UserVO {
     private String userName;
     private String userIdCard;
     private Integer faceBound;
+    private Integer realnameBound;
+    private String idCardMask;
 }

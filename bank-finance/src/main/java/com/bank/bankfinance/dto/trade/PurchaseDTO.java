@@ -20,4 +20,6 @@ public class PurchaseDTO {
     private BigDecimal amount;
     @NotBlank(message = "交易密码不能为空")
     private String password;
+    @NotBlank(message = "请求Id不能为空")
+    private String requestId;
 }

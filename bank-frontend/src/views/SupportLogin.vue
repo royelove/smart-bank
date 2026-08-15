@@ -5,7 +5,7 @@
       <div class="login-side">
         <div class="side-logo">
           <div class="logo-icon">
-            <el-icon :size="30" color="#f5af19"><Headset /></el-icon>
+            <el-icon :size="30" color="var(--vault-accent)"><Headset /></el-icon>
           </div>
           <div class="logo-text">
             <div class="logo-title">钱钱银行</div>
@@ -26,6 +26,10 @@
 
       <div class="login-form-box">
         <div class="form-title">
+          <div class="form-status">
+            <span class="vault-status-dot"></span>
+            <span class="form-status-text">STAFF ACCESS</span>
+          </div>
           <h3>{{ mode === 'login' ? '客服登录' : '注册客服账号' }}</h3>
           <p>{{ mode === 'login' ? '请使用客服账号登录工作台' : '注册后可进入客服工作台' }}</p>
         </div>
@@ -114,58 +118,63 @@ const handleSubmit = async () => {
   position: relative;
   min-height: 100vh;
   display: flex; align-items: center; justify-content: center;
-  background: #0c1a3b;
+  background: var(--vault-bg);
   overflow: hidden;
 }
 .login-bg {
   position: absolute; inset: 0;
   background:
-    radial-gradient(circle at 15% 20%, rgba(245, 175, 25, 0.18), transparent 40%),
-    radial-gradient(circle at 85% 80%, rgba(64, 158, 255, 0.22), transparent 45%),
-    linear-gradient(135deg, #0c1a3b, #16325c 55%, #1d4272);
+    radial-gradient(circle at 15% 20%, rgba(212,176,106,0.12), transparent 40%),
+    radial-gradient(circle at 85% 80%, rgba(212,176,106,0.16), transparent 45%),
+    linear-gradient(135deg, #0a0e16, #0e1626 55%, #101c30);
 }
 .login-wrap {
   position: relative;
   width: 880px; max-width: 94vw;
   min-height: 520px;
   display: flex;
-  background: #fff;
+  background: linear-gradient(180deg, var(--vault-panel-2), var(--vault-panel));
+  border: 1px solid var(--vault-line-strong);
   border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(212,176,106,0.08), inset 0 1px 0 rgba(255,255,255,0.04);
 }
 .login-side {
   width: 46%;
   padding: 44px 38px;
   display: flex; flex-direction: column;
-  background: linear-gradient(160deg, #0c1a3b, #1a3a6b 70%, #20508c);
-  color: #fff;
+  background: linear-gradient(160deg, #0a101c, #0e1626 70%, #131f33);
+  border-right: 1px solid var(--vault-line);
+  color: var(--vault-text);
 }
 .side-logo { display: flex; align-items: center; gap: 14px; }
 .logo-icon {
   width: 46px; height: 46px; border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(245, 175, 25, 0.15);
-  border: 1px solid rgba(245, 175, 25, 0.4);
+  background: rgba(212,176,106,0.12);
+  border: 1px solid var(--vault-line-strong);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
 }
-.logo-title { font-size: 22px; font-weight: 700; letter-spacing: 2px; }
-.logo-sub { font-size: 12px; color: rgba(255, 255, 255, 0.6); letter-spacing: 4px; margin-top: 2px; }
+.logo-title { font-size: 22px; font-weight: 700; letter-spacing: 2px; color: #f5ecd8; }
+.logo-sub { font-size: 12px; color: var(--vault-text-3); letter-spacing: 4px; margin-top: 2px; }
 .side-slogan { margin-top: 72px; }
 .side-slogan h2 { font-size: 26px; margin: 0 0 10px; letter-spacing: 1px; }
-.side-slogan p { font-size: 14px; color: rgba(255, 255, 255, 0.65); margin: 0; }
+.side-slogan p { font-size: 14px; color: var(--vault-text-3); margin: 0; }
 .side-features {
   list-style: none; margin: 44px 0 0; padding: 0;
   display: flex; flex-direction: column; gap: 18px;
 }
-.side-features li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: rgba(255, 255, 255, 0.85); }
-.side-features li .el-icon { color: #f5af19; }
-.side-footer { margin-top: auto; font-size: 11px; color: rgba(255, 255, 255, 0.35); letter-spacing: 1px; }
+.side-features li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--vault-text-2); }
+.side-features li .el-icon { color: var(--vault-accent); }
+.side-footer { margin-top: auto; font-size: 11px; color: var(--vault-text-dim); letter-spacing: 1px; }
 .login-form-box { flex: 1; padding: 64px 56px; display: flex; flex-direction: column; justify-content: center; }
-.form-title h3 { margin: 0 0 6px; font-size: 24px; color: #1a3a6b; }
-.form-title p { margin: 0 0 34px; font-size: 13px; color: #999; }
-.form-tip { margin-top: 22px; text-align: center; font-size: 12px; color: #bbb; }
-.switch-link { margin-top: 16px; text-align: center; font-size: 13px; color: #409eff; cursor: pointer; }
-.switch-link:hover { text-decoration: underline; }
+.form-status { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.form-status-text { font-size: 11px; color: var(--vault-text-3); letter-spacing: 0.2em; }
+.form-title h3 { margin: 0 0 6px; font-size: 24px; color: var(--vault-text); letter-spacing: 0.1em; }
+.form-title p { margin: 0 0 34px; font-size: 13px; color: var(--vault-text-3); }
+.form-tip { margin-top: 22px; text-align: center; font-size: 12px; color: var(--vault-text-dim); }
+.switch-link { margin-top: 16px; text-align: center; font-size: 13px; color: #e6c98a; cursor: pointer; }
+.switch-link:hover { text-decoration: underline; color: var(--vault-accent); }
 @media (max-width: 760px) {
   .login-side { display: none; }
 }

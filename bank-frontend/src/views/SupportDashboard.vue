@@ -2,9 +2,7 @@
   <div class="support-layout">
     <aside class="support-aside">
       <div class="aside-brand">
-        <div class="brand-icon">
-          <el-icon :size="24" color="#f5af19"><Headset /></el-icon>
-        </div>
+        <div class="brand-icon">钱</div>
         <div class="brand-text">
           <div class="brand-title">钱钱银行</div>
           <div class="brand-sub">客服管理后台</div>
@@ -14,9 +12,9 @@
       <el-menu
         :default-active="activeMenu"
         class="aside-menu"
-        background-color="#0d2142"
-        text-color="rgba(255,255,255,0.7)"
-        active-text-color="#f5af19"
+        background-color="transparent"
+        text-color="rgba(212,176,106,0.72)"
+        active-text-color="#e6c98a"
         @select="onMenuSelect"
       >
         <el-menu-item index="overview">
@@ -27,6 +25,10 @@
           <el-icon><Tickets /></el-icon>
           <span>工单管理</span>
         </el-menu-item>
+        <el-menu-item index="idcard">
+          <el-icon><Postcard /></el-icon>
+          <span>身份库管理</span>
+        </el-menu-item>
       </el-menu>
 
       <div class="aside-footer">客服人员专用通道</div>
@@ -34,8 +36,12 @@
 
     <main class="support-main">
       <header class="support-header">
-        <div class="header-title">{{ activeMenu === 'overview' ? '数据概览' : '工单管理' }}</div>
+        <div class="header-title">{{ headerTitle }}</div>
         <div class="header-right">
+          <div class="server-status">
+            <span class="vault-status-dot"></span>
+            <span class="server-text">服务在线</span>
+          </div>
           <el-tag v-if="activeMenu === 'tickets'" size="small" type="warning" effect="plain">当前视图：{{ statusText(activeStatus) }}</el-tag>
           <div class="staff-info">
             <el-icon><UserFilled /></el-icon>
@@ -50,23 +56,23 @@
         <template v-if="activeMenu === 'overview'">
           <div class="stat-row">
             <el-card shadow="hover" class="stat-card">
-              <div class="stat-num" style="color:#409eff">{{ stats.total }}</div>
+              <div class="stat-num vault-num" style="color:var(--vault-accent)">{{ stats.total }}</div>
               <div class="stat-label">工单总数</div>
             </el-card>
             <el-card shadow="hover" class="stat-card">
-              <div class="stat-num" style="color:#f56c6c">{{ stats.pending }}</div>
+              <div class="stat-num vault-num" style="color:var(--vault-down)">{{ stats.pending }}</div>
               <div class="stat-label">待处理</div>
             </el-card>
             <el-card shadow="hover" class="stat-card">
-              <div class="stat-num" style="color:#e6a23c">{{ stats.processing }}</div>
+              <div class="stat-num vault-num" style="color:var(--vault-gold)">{{ stats.processing }}</div>
               <div class="stat-label">处理中</div>
             </el-card>
             <el-card shadow="hover" class="stat-card">
-              <div class="stat-num" style="color:#67c23a">{{ stats.closed }}</div>
+              <div class="stat-num vault-num" style="color:var(--vault-up)">{{ stats.closed }}</div>
               <div class="stat-label">已关闭</div>
             </el-card>
             <el-card shadow="hover" class="stat-card invalid-card">
-              <div class="stat-num" style="color:#909399">{{ stats.invalid }}</div>
+              <div class="stat-num vault-num" style="color:var(--vault-text-3)">{{ stats.invalid }}</div>
               <div class="stat-label">无效/恶意</div>
             </el-card>
           </div>
@@ -107,7 +113,7 @@
         </template>
 
         <!-- 工单管理 -->
-        <template v-else>
+        <template v-else-if="activeMenu === 'tickets'">
           <el-card class="ticket-card">
             <template #header>
               <div class="card-header">
@@ -182,6 +188,65 @@
             <el-empty v-if="!loading && filteredTickets.length === 0" description="暂无工单" />
           </el-card>
         </template>
+
+        <!-- 身份库管理 -->
+        <template v-else-if="activeMenu === 'idcard'">
+          <el-card class="idcard-card">
+            <template #header>
+              <div class="card-header">
+                <span>身份库录入</span>
+                <span class="idcard-tip">身份证号 + 姓名 + 人脸照片建档，用户实名认证时将与此库比对</span>
+              </div>
+            </template>
+            <el-form :model="idCardForm" label-width="90px" class="idcard-form">
+              <el-form-item label="身份证号">
+                <el-input v-model="idCardForm.idCard" placeholder="18位身份证号" maxlength="18" clearable style="width:260px" />
+              </el-form-item>
+              <el-form-item label="姓名">
+                <el-input v-model="idCardForm.name" placeholder="真实姓名" maxlength="20" clearable style="width:260px" />
+              </el-form-item>
+              <el-form-item label="人脸照片">
+                <div class="idcard-upload-row">
+                  <el-upload
+                    accept="image/*"
+                    :auto-upload="false"
+                    :show-file-list="false"
+                    :on-change="onIdCardImage"
+                  >
+                    <el-button :type="idCardImage ? 'success' : 'primary'">
+                      {{ idCardImage ? '已选择照片' : '选择照片' }}
+                    </el-button>
+                  </el-upload>
+                  <el-image v-if="idCardPreview" :src="idCardPreview" fit="cover" class="idcard-preview" />
+                </div>
+              </el-form-item>
+              <el-form-item>
+                <el-button type="warning" :loading="enrolling" @click="handleEnroll">录入身份库</el-button>
+                <el-button @click="resetIdCardForm">重置</el-button>
+              </el-form-item>
+            </el-form>
+          </el-card>
+
+          <el-card class="idcard-card">
+            <template #header>
+              <div class="card-header">
+                <span>身份库记录（{{ idCards.length }}）</span>
+                <el-button size="small" @click="loadIdCards">刷新</el-button>
+              </div>
+            </template>
+            <el-table :data="idCards" v-loading="idLoading" stripe style="width:100%">
+              <el-table-column prop="id" label="ID" width="80" />
+              <el-table-column label="身份证号" width="240">
+                <template #default="{ row }">{{ maskId(row.idCard) }}</template>
+              </el-table-column>
+              <el-table-column prop="name" label="姓名" width="140" />
+              <el-table-column label="录入时间" min-width="180">
+                <template #default="{ row }">{{ formatTime(row.creationDate) }}</template>
+              </el-table-column>
+            </el-table>
+            <el-empty v-if="!idLoading && idCards.length === 0" description="身份库暂无记录" />
+          </el-card>
+        </template>
       </section>
     </main>
 
@@ -213,7 +278,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getAllTickets, acceptTicket, replyTicket, closeTicket } from '@/api/support'
+import { getAllTickets, acceptTicket, replyTicket, closeTicket, enrollIdCard, getIdCardList } from '@/api/support'
 
 const router = useRouter()
 const staffName = ref(localStorage.getItem('staffName') || '客服')
@@ -226,6 +291,18 @@ const detailVisible = ref(false)
 const replyVisible = ref(false)
 const replying = ref(false)
 const replyContent = ref('')
+const idCardForm = ref({ idCard: '', name: '' })
+const idCardImage = ref('')
+const idCardPreview = ref('')
+const idCards = ref([])
+const idLoading = ref(false)
+const enrolling = ref(false)
+
+const headerTitle = computed(() => {
+  if (activeMenu.value === 'overview') return '数据概览'
+  if (activeMenu.value === 'idcard') return '身份库管理'
+  return '工单管理'
+})
 
 const statusTextMap = { all: '全部', 0: '待处理', 1: '处理中', 2: '已回复', 3: '已关闭', invalid: '无效/恶意' }
 const statusText = (s) => statusTextMap[s] || s
@@ -269,10 +346,10 @@ const sentimentType = (s) => {
 }
 
 const scoreColor = (score) => {
-  if (score == null) return '#999'
-  if (score >= 60) return '#67c23a'
-  if (score >= 40) return '#e6a23c'
-  return '#f56c6c'
+  if (score == null) return 'var(--vault-text-3)'
+  if (score >= 60) return 'var(--vault-up)'
+  if (score >= 40) return 'var(--vault-gold)'
+  return 'var(--vault-down)'
 }
 
 const rowClass = ({ row }) => (Number(row.aiValid) === 0 ? 'invalid-row' : '')
@@ -284,6 +361,7 @@ const formatTime = (t) => {
 
 const onMenuSelect = (index) => {
   activeMenu.value = index
+  if (index === 'idcard') loadIdCards()
 }
 
 const goTickets = () => {
@@ -359,61 +437,131 @@ const logout = async () => {
   }
 }
 
+const maskId = (id) => {
+  if (!id || id.length < 10) return id || '--'
+  return id.substring(0, 6) + '********' + id.substring(id.length - 4)
+}
+
+const onIdCardImage = (file) => {
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    idCardImage.value = e.target.result.split(',')[1]
+    idCardPreview.value = e.target.result
+  }
+  reader.readAsDataURL(file.raw)
+}
+
+const resetIdCardForm = () => {
+  idCardForm.value = { idCard: '', name: '' }
+  idCardImage.value = ''
+  idCardPreview.value = ''
+}
+
+const handleEnroll = async () => {
+  const f = idCardForm.value
+  if (!/^\d{17}[\dXx]$/.test(f.idCard)) {
+    ElMessage.warning('请输入正确的18位身份证号')
+    return
+  }
+  if (!f.name.trim()) {
+    ElMessage.warning('请输入姓名')
+    return
+  }
+  if (!idCardImage.value) {
+    ElMessage.warning('请选择人脸照片')
+    return
+  }
+  enrolling.value = true
+  try {
+    await enrollIdCard({ idCard: f.idCard, name: f.name, image: idCardImage.value })
+    ElMessage.success('身份库录入成功')
+    resetIdCardForm()
+    loadIdCards()
+  } catch (e) {
+    console.error(e)
+  } finally {
+    enrolling.value = false
+  }
+}
+
+const loadIdCards = async () => {
+  idLoading.value = true
+  try {
+    const res = await getIdCardList()
+    idCards.value = res.data || []
+  } catch (e) {
+    console.error(e)
+  } finally {
+    idLoading.value = false
+  }
+}
+
 onMounted(loadAll)
 </script>
 
 <style scoped>
-.support-layout { display: flex; min-height: 100vh; background: #f0f2f5; }
+.support-layout { display: flex; min-height: 100vh; background: var(--vault-bg); }
 .support-aside {
   width: 220px; flex-shrink: 0;
-  background: linear-gradient(180deg, #0d2142, #0c1a3b);
+  background: var(--vault-graphite);
+  border-right: 1px solid var(--vault-line);
   display: flex; flex-direction: column;
 }
 .aside-brand {
   display: flex; align-items: center; gap: 12px;
   padding: 22px 20px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--vault-line);
 }
 .brand-icon {
-  width: 42px; height: 42px; border-radius: 10px;
+  width: 42px; height: 42px; border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(245, 175, 25, 0.15);
-  border: 1px solid rgba(245, 175, 25, 0.4);
+  font-size: 22px; font-weight: 800;
+  color: #231a08;
+  background: linear-gradient(135deg, #e6c98a, #b08d4a);
+  box-shadow: 0 0 18px var(--vault-accent-glow);
 }
-.brand-title { font-size: 17px; font-weight: 700; color: #fff; letter-spacing: 1px; }
-.brand-sub { font-size: 11px; color: rgba(255, 255, 255, 0.5); letter-spacing: 3px; margin-top: 2px; }
-.aside-menu { border-right: none; flex: 1; padding-top: 10px; }
+.brand-title { font-size: 17px; font-weight: 700; color: var(--vault-text); letter-spacing: 1px; }
+.brand-sub { font-size: 11px; color: var(--vault-text-3); letter-spacing: 3px; margin-top: 2px; }
+.aside-menu { border-right: none; flex: 1; padding-top: 10px; background: transparent; }
 .aside-menu :deep(.el-menu-item) { height: 50px; }
-.aside-menu :deep(.el-menu-item.is-active) { background: rgba(245, 175, 25, 0.1); }
-.aside-footer { padding: 16px 20px; font-size: 11px; color: rgba(255, 255, 255, 0.3); letter-spacing: 1px; }
+.aside-menu :deep(.el-menu-item.is-active) { background: rgba(212,176,106,0.1); }
+.aside-menu :deep(.el-menu-item:hover) { background: rgba(212,176,106,0.06); }
+.aside-footer { padding: 16px 20px; font-size: 11px; color: var(--vault-text-dim); letter-spacing: 1px; }
 .support-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .support-header {
   height: 60px; flex-shrink: 0;
   display: flex; justify-content: space-between; align-items: center;
   padding: 0 24px;
-  background: #fff; border-bottom: 1px solid #e8e8e8;
+  background: rgba(13,20,32,0.9);
+  border-bottom: 1px solid var(--vault-line);
+  backdrop-filter: blur(8px);
 }
-.header-title { font-size: 17px; font-weight: 700; color: #1a3a6b; }
+.header-title { font-size: 17px; font-weight: 700; color: var(--vault-text); letter-spacing: 0.08em; }
 .header-right { display: flex; align-items: center; gap: 16px; }
-.staff-info { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #333; }
+.server-status { display: flex; align-items: center; gap: 8px; }
+.server-text { font-size: 12px; color: var(--vault-text-3); letter-spacing: 0.05em; }
+.staff-info { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--vault-text-2); }
 .support-content { flex: 1; padding: 20px 24px; overflow: auto; }
-.stat-row {
-  display: flex; gap: 16px; margin-bottom: 16px;
-}
-.stat-card { flex: 1; text-align: center; padding: 8px 0; }
-.invalid-card { background: linear-gradient(180deg, #fafafa, #f0f2f5); }
+.stat-row { display: flex; gap: 16px; margin-bottom: 16px; }
+.stat-card { flex: 1; text-align: center; padding: 8px 0; border: 1px solid var(--vault-line); background: linear-gradient(180deg, var(--vault-panel-2), var(--vault-panel)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 12px 32px rgba(0,0,0,0.25); }
+.invalid-card { opacity: 0.85; }
 .stat-num { font-size: 34px; font-weight: 700; }
-.stat-label { font-size: 13px; color: #999; margin-top: 6px; }
-.card-header { display: flex; justify-content: space-between; align-items: center; }
-.todo-card { margin-bottom: 16px; }
+.stat-label { font-size: 13px; color: var(--vault-text-3); margin-top: 6px; }
+.card-header { display: flex; justify-content: space-between; align-items: center; color: var(--vault-text); }
+.todo-card { margin-bottom: 16px; border-color: var(--vault-line); }
 .ticket-card :deep(.el-tabs__item) { font-weight: 500; }
-.ticket-card :deep(.el-table .invalid-row) { background: #fafafa; color: #999; }
-.ticket-card :deep(.el-table .invalid-row:hover > td) { background: #f5f5f5; }
+.ticket-card :deep(.el-table .invalid-row) { color: var(--vault-text-3); }
+.ticket-card :deep(.el-table .invalid-row:hover > td) { background: var(--vault-panel); }
 .ai-eval {
   display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  font-size: 12px; color: #666;
+  font-size: 12px; color: var(--vault-text-2);
 }
-.ticket-detail { display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
-.detail-item label { color: #999; margin-right: 6px; }
-.detail-item.reply { background: #f6f9ff; padding: 10px 12px; border-radius: 8px; }
+.ticket-detail { display: flex; flex-direction: column; gap: 10px; font-size: 14px; color: var(--vault-text); }
+.detail-item label { color: var(--vault-text-3); margin-right: 6px; }
+.detail-item.reply { background: rgba(212,176,106,0.06); border: 1px solid var(--vault-line); padding: 10px 12px; border-radius: 8px; }
+.idcard-card { margin-bottom: 16px; border-color: var(--vault-line); }
+.idcard-tip { font-size: 12px; color: var(--vault-text-3); }
+.idcard-form { max-width: 520px; padding-top: 6px; }
+.idcard-upload-row { display: flex; align-items: center; gap: 12px; }
+.idcard-preview { width: 64px; height: 64px; border-radius: 8px; border: 1px solid var(--vault-line); }
 </style>

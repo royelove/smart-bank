@@ -53,4 +53,10 @@ public class RedisUtil {
     public Long increment(String key, long delta) {
         return redisTemplate.opsForValue().increment(key, delta);
     }
+    /*
+        setIfAbsent是Spring Data Redis库里面封装的一个方法，可用于实现分布式锁，防止缓存击穿，实现幂等性
+     */
+    public boolean setIfAbsent(String key,Object value,long timeout,TimeUnit unit){
+        return redisTemplate.opsForValue().setIfAbsent(key, value, timeout, unit);
+    }
 }

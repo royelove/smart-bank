@@ -46,6 +46,7 @@ public enum ResponseCode {
     FACE_SERVICE_ERROR("910004","人脸识别服务不可用，请稍后再试"),
     ID_CARD_NOT_FOUND("910005","身份库中未找到该身份证号，请联系客服录入"),
     ID_CARD_REQUIRED("910006","请先在个人信息中完善身份证号"),
+    ID_CARD_EXISTS("910007","该身份证号已录入"),
     STOCK_CODE_INVALID("920001","股票不存在或已停牌"),
     STOCK_QTY_INVALID("920002","委托数量须为100股的整数倍"),
     STOCK_PRICE_INVALID("920003","委托价格必须大于0"),
@@ -53,6 +54,8 @@ public enum ResponseCode {
     STOCK_SHARE_INSUFFICIENT("920005","可用持仓不足"),
     STOCK_ORDER_NOT_CANCELLABLE("920006","仅待成交委托可撤单"),
     STOCK_QUOTE_UNAVAILABLE("920007","当前无行情，请稍后再试"),
+    STOCK_DIRECTION_INVALID("920008","无效的交易方向"),
+    STOCK_PRICE_TYPE_INVALID("920009","无效的委托类型"),
     IDEMPOTENT_REJECTED("600019", "请勿重复提交");
     private String code;
     private String msg;

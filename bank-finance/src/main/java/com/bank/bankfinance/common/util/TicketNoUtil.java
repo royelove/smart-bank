@@ -26,6 +26,10 @@ public class TicketNoUtil {
         return "T" + timestamp() + randomHex(6);
     }
 
+    public static String orderNo() {
+        return "O" + timestamp() + randomHex(6);
+    }
+
     private static String timestamp() {
         return LocalDateTime.now().format(TS);
     }

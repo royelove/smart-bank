@@ -1,0 +1,17 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: smart-bank-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"    # AMQP 端口（应用连接）
+      - "15672:15672"  # 管理台 http://localhost:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD:-admin123}
+      RABBITMQ_DEFAULT_VHOST: /
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+volumes:
+  rabbitmq_data:

@@ -40,9 +40,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Autowired
     private FaceService faceService;
     @Autowired
-    private IdCardLibMapper idCardLibMapper;
-    @Autowired
     private RedisUtil redisUtil;
+
+    @Autowired
+    private IdCardLibMapper idCardLibMapper;
 
 
     public User getUserEntity(String userPhone){

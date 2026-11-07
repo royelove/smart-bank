@@ -23,10 +23,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import static com.bank.bankfinance.common.constant.ResponseCode.*;
@@ -39,6 +41,12 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     private static final long CACHE_EXPIRE_MINUTES = 30;
     private static final String VERIFICATION_CODE_PREFIX = "verify:code:";
     private static final long CODE_EXPIRE_MINUTES = 5;
+    /** 新增：验证码连续输错次数计数前缀 */
+    private static final String VERIFICATION_CODE_FAIL_PREFIX = "verify:code:fail:";
+    /** 新增：同一账户验证码最多允许输错几次，超过即作废当前验证码 */
+    private static final int MAX_CODE_ATTEMPTS = 5;
+    /** 新增：验证码必须用密码学安全随机数生成（原为 java.util.Random，可被预测） */
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     @Autowired
     private TradeService tradeService;
@@ -73,7 +81,29 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return account;
     }
 
-    private void evictAccountCache(String accountNumber) {
+    /**
+     * 清理账户缓存。
+     *
+     * <p>修复记录：原实现在事务内直接删 key。事务提交前删掉缓存，如果这时有并发请求读到
+     * 「还没提交」的旧数据并回填缓存，30 分钟的缓存过期前所有人看到的都是旧余额
+     * （删除动作发生在提交之前，等于白删）。现在只要处于事务中就注册
+     * {@link TransactionSynchronization}，把删除推迟到事务完成之后再执行。
+     */
+    @Override
+    public void evictAccountCache(String accountNumber) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCompletion(int status) {
+                    doEvictAccountCache(accountNumber);
+                }
+            });
+            return;
+        }
+        doEvictAccountCache(accountNumber);
+    }
+
+    private void doEvictAccountCache(String accountNumber) {
         try {
             redisUtil.delete(ACCOUNT_CACHE_PREFIX + accountNumber);
         } catch (Exception e) {
@@ -86,12 +116,20 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     @Transactional
     @Override
     public void deposit(DepositDTO depositDTO) {
-        Boolean first = redisUtil.setIfAbsent("idem:deposit:" + depositDTO.getRequestId(), "1", 10, TimeUnit.MINUTES);
+        //依据是requestId，而不是accountId,因此不是10分钟内智能存一次款
+        String accountNumber = depositDTO.getAccountNo();
+        /*
+         * 修复记录：原幂等 key 为 "idem:deposit:" + requestId，缺少账户维度。
+         * requestId 由客户端生成，不同用户之间会互相干扰：只要有人猜到/复用了你的 requestId，
+         * 你 10 分钟内的存款就会被判成「重复提交」而失败；反过来攻击者可以拿一个固定 requestId
+         * 反复占用，让受害者无法存款。幂等域必须是「谁的哪一次请求」。
+         */
+        String idemKey = "idem:deposit:" + accountNumber + ":" + depositDTO.getRequestId();
+        Boolean first = redisUtil.setIfAbsent(idemKey, "1", 10, TimeUnit.MINUTES);
         if(!Boolean.TRUE.equals(first)){
             throw new BusinessException(IDEMPOTENT_REJECTED);
         }
         try {
-            String accountNumber = depositDTO.getAccountNo();
             Account account = getAccountEntity(accountNumber);
             String password = depositDTO.getPassword();
             if (!passwordEncoder.matches(password, account.getPassword())) {
@@ -113,7 +151,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             trade.setTradeType("存款");
             tradeService.saveTrade(trade);
         }catch (Exception e){
-            redisUtil.delete("idem:deposit:" + depositDTO.getRequestId());
+            redisUtil.delete(idemKey);
             throw e;
         }
     }
@@ -121,13 +159,20 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     @Override
     @Transactional
     public void transfer(TransferDTO transferDTO) {
-        Boolean first = redisUtil.setIfAbsent("idem:transfer:" + transferDTO.getRequestId(), "1", 10, TimeUnit.MINUTES);
+        String inNumber = transferDTO.getInNumber();
+        String outNumber = transferDTO.getOutNumber();
+        /*
+         * 修复记录：原幂等 key 为 "idem:transfer:" + requestId，缺少账户维度。
+         * 与存款同理：A 用户只要复用 B 用过的 requestId，就能让 B 的转账被判成重复提交而失败，
+         * 或者反过来利用别人的 requestId 把自己的重复请求「洗」成唯一请求。
+         * 幂等域改为「付款方:收款方:requestId」。
+         */
+        String idemKey = "idem:transfer:" + outNumber + ":" + inNumber + ":" + transferDTO.getRequestId();
+        Boolean first = redisUtil.setIfAbsent(idemKey, "1", 10, TimeUnit.MINUTES);
         if (!Boolean.TRUE.equals(first)) {
             throw new BusinessException(IDEMPOTENT_REJECTED);
         }
         try {
-            String inNumber = transferDTO.getInNumber();
-            String outNumber = transferDTO.getOutNumber();
             String firstNo = inNumber.compareTo(outNumber) > 0 ? outNumber : inNumber;
             String secondNo = inNumber.compareTo(outNumber) < 0 ? outNumber : inNumber;
             //用锁，先锁住卡号小的，再锁住卡号大的，防止产生A->B,B->A
@@ -160,13 +205,20 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             if(inAccount.getAccountStatus()==0){
                 throw new BusinessException(TRANSACTION_INVALID_FREEZE_TRANSFER);
             }
-            if(transferDTO.getAmount().compareTo(outAccount.getAccountBalance()) > 0){
+            /*
+             * 修复：原实现是内存里 read-modify-write：
+             *   outAccount.setAccountBalance(outAccount.getAccountBalance().subtract(amount));
+             *   this.updateById(outAccount);
+             * 两个问题：
+             * 1) 守卫用的是「余额」而不是「可用资金（余额-冻结）」，可以把已委托冻结的钱转走；
+             * 2) 整行 updateById 会把读取时的其余字段一并写回，并对余额做「读-算-写」，
+             *    任何绕过 selectForUpdate 的并发写都会被覆盖（丢失更新）。
+             * 改为原子条件更新：付款方按可用资金扣减，收款方增量入账。
+             */
+            if (accountMapper.deductAvailableBalance(outNumber, transferDTO.getAmount()) == 0) {
                 throw new BusinessException(TRANSACTION_INVALID_INSUFFICIENT);
             }
-            inAccount.setAccountBalance(inAccount.getAccountBalance().add(transferDTO.getAmount()));
-            outAccount.setAccountBalance(outAccount.getAccountBalance().subtract(transferDTO.getAmount()));
-            this.updateById(outAccount);
-            this.updateById(inAccount);
+            accountMapper.addBalance(inNumber, transferDTO.getAmount());
             evictAccountCache(inNumber);
             evictAccountCache(outNumber);
             Trade trade = new Trade();
@@ -180,7 +232,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             trade.setUpdateDate(now);
             tradeService.saveTrade(trade);
         } catch (Exception e) {
-            redisUtil.delete("idem:transfer:" + transferDTO.getRequestId());
+            redisUtil.delete(idemKey);
             throw e;
         }
     }
@@ -204,31 +256,48 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     @Override
     public void withdraw(WithdrawDTO withdrawDTO) {
         String accountNumber = withdrawDTO.getAccountNumber();
-        Account account = getAccountEntity(accountNumber);
-        String password = withdrawDTO.getPassword();
-        if(account.getAccountStatus()==0){
-            throw new BusinessException(TRANSACTION_INVALID_FREEZE);
+        // 修复记录：同存款/转账，幂等 key 补上账户维度，避免不同用户之间用 requestId 互相干扰
+        String idemKey = "idem:withdraw:" + accountNumber + ":" + withdrawDTO.getRequestId();
+        Boolean first = redisUtil.setIfAbsent(idemKey, "1", 10, TimeUnit.MINUTES);
+        if(!Boolean.TRUE.equals(first)){
+            throw new BusinessException(IDEMPOTENT_REJECTED);
         }
-        if (!passwordEncoder.matches(password, account.getPassword())) {
-            throw new BusinessException(PASSWORD_INVALID);
-        }
-        riskAssessmentService.assessAndBlock(accountNumber, withdrawDTO.getAmount(), null);
-        int n = accountMapper.deductBalance(accountNumber, withdrawDTO.getAmount());
-        if(n == 0){
-            throw new BusinessException(TRANSACTION_INVALID_INSUFFICIENT);
-        }
-        evictAccountCache(accountNumber);
+        try {
+            Account account = getAccountEntity(accountNumber);
+            String password = withdrawDTO.getPassword();
+            if(account.getAccountStatus()==0){
+                throw new BusinessException(TRANSACTION_INVALID_FREEZE);
+            }
+            if (!passwordEncoder.matches(password, account.getPassword())) {
+                throw new BusinessException(PASSWORD_INVALID);
+            }
+            riskAssessmentService.assessAndBlock(accountNumber, withdrawDTO.getAmount(), null);
+            /*
+             * 修复：原调用 deductBalance（只守卫 account_balance >= amount），不看冻结额。
+             * 于是「先挂股票买单冻结资金，再提现同一笔钱」可以成功，账户余额被抽到低于冻结额，
+             * 之后成交结算要么把余额扣成负数、要么直接结算失败。改用可用资金（余额-冻结）守卫。
+             * 同时这也是原子的条件更新，不再依赖前面查出来的内存余额快照。
+             */
+            int n = accountMapper.deductAvailableBalance(accountNumber, withdrawDTO.getAmount());
+            if(n == 0){
+                throw new BusinessException(TRANSACTION_INVALID_INSUFFICIENT);
+            }
+            evictAccountCache(accountNumber);
 
-        Trade trade = new Trade();
-        trade.setTradeNo(TicketNoUtil.tradeNo());
-        trade.setFromAccount(accountNumber);
-        trade.setToAccount("");
-        trade.setAmount(withdrawDTO.getAmount());
-        trade.setTradeType("取款"); // 3代表取款
-        LocalDateTime now = LocalDateTime.now();
-        trade.setTradeDate(now);
-        trade.setUpdateDate(now);
-        tradeService.saveTrade(trade);
+            Trade trade = new Trade();
+            trade.setTradeNo(TicketNoUtil.tradeNo());
+            trade.setFromAccount(accountNumber);
+            trade.setToAccount("");
+            trade.setAmount(withdrawDTO.getAmount());
+            trade.setTradeType("取款");
+            LocalDateTime now = LocalDateTime.now();
+            trade.setTradeDate(now);
+            trade.setUpdateDate(now);
+            tradeService.saveTrade(trade);
+        } catch (Exception e) {
+            redisUtil.delete(idemKey);
+            throw e;
+        }
     }
     @Transactional
     @Override
@@ -309,8 +378,17 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if (!sendCodeDTO.getUserPhoneNumber().equals(account.getUserPhoneNumber())) {
             throw new BusinessException(PHONE_NUMBER_MISMATCH);
         }
-        String code = String.format("%06d", new Random().nextInt(999999));
+        /*
+         * 修复：原为 new Random().nextInt(999999)。
+         * 1) java.util.Random 是可预测的伪随机（48 位线性同余），攻击者观察到几个验证码后
+         *    即可推算后续验证码，配合重置密码就等于接管账户；改用 SecureRandom。
+         * 2) nextInt(999999) 的取值区间是 [0, 999998]，永远取不到 999999，
+         *    且取模偏差使分布不均匀；改为 nextInt(1_000_000)。
+         */
+        String code = String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
         redisUtil.set(VERIFICATION_CODE_PREFIX + sendCodeDTO.getAccountNumber(), code, CODE_EXPIRE_MINUTES, TimeUnit.MINUTES);
+        // 重发验证码时清空失败计数，避免用户被自己之前的输错锁死
+        redisUtil.delete(verifyFailKey(sendCodeDTO.getAccountNumber()));
         String phoneTail = sendCodeDTO.getUserPhoneNumber() != null && sendCodeDTO.getUserPhoneNumber().length() >= 4
                 ? sendCodeDTO.getUserPhoneNumber().substring(sendCodeDTO.getUserPhoneNumber().length() - 4)
                 : "****";
@@ -322,15 +400,43 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if (!resetPasswordDTO.getNewPassword().equals(resetPasswordDTO.getConfirmPassword())) {
             throw new BusinessException(TRANSACTION_INVALID_NOT_SAME_CODE);
         }
-        String savedCode = redisUtil.get(VERIFICATION_CODE_PREFIX + resetPasswordDTO.getAccountNumber());
+        String accountNumber = resetPasswordDTO.getAccountNumber();
+        String codeKey = VERIFICATION_CODE_PREFIX + accountNumber;
+        String savedCode = redisUtil.get(codeKey);
         if (savedCode == null || !savedCode.equals(resetPasswordDTO.getCode())) {
+            /*
+             * 修复：原实现只比较验证码，没有任何失败次数限制。验证码只有 6 位（10^6）且有效期
+             * CODE_EXPIRE_MINUTES 分钟，攻击者可以对同一账户持续尝试直到命中——接口限流只能减缓
+             * 速率，不能从根本上限制尝试次数。这里在 Redis 里对该账户累计失败次数，
+             * 达到上限即直接作废当前验证码，必须重新发码，使「猜中概率」与「尝试次数」解耦。
+             */
+            long fails = incrementVerifyFail(accountNumber);
+            if (fails >= MAX_CODE_ATTEMPTS) {
+                redisUtil.delete(codeKey);
+                log.warn("验证码连续输错 {} 次，已作废该账户验证码 account={}", fails, accountNumber);
+            }
             throw new BusinessException(VERIFICATION_CODE_INVALID);
         }
-        Account account = getAccountEntity(resetPasswordDTO.getAccountNumber());
+        Account account = getAccountEntity(accountNumber);
         account.setPassword(passwordEncoder.encode(resetPasswordDTO.getNewPassword()));
         this.updateById(account);
-        evictAccountCache(resetPasswordDTO.getAccountNumber());
-        redisUtil.delete(VERIFICATION_CODE_PREFIX + resetPasswordDTO.getAccountNumber());
+        evictAccountCache(accountNumber);
+        redisUtil.delete(codeKey);
+        redisUtil.delete(verifyFailKey(accountNumber));
+    }
+
+    private String verifyFailKey(String accountNumber) {
+        return VERIFICATION_CODE_FAIL_PREFIX + accountNumber;
+    }
+
+    /** 累计并返回验证码失败次数，首次写入时设置过期时间（与验证码同生命周期量级） */
+    private long incrementVerifyFail(String accountNumber) {
+        String key = verifyFailKey(accountNumber);
+        Long fails = redisUtil.increment(key);
+        if (fails != null && fails == 1L) {
+            redisUtil.expire(key, CODE_EXPIRE_MINUTES, TimeUnit.MINUTES);
+        }
+        return fails == null ? 0L : fails;
     }
 
     @Override
@@ -343,6 +449,46 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         account.setAccountHolderName(updateProfileDTO.getAccountHolderName());
         account.setUserPhoneNumber(updateProfileDTO.getUserPhoneNumber());
         updateById(account);
+        evictAccountCache(accountNumber);
+    }
+
+    @Override
+    public boolean freezeBuyFunds(String accountNumber, BigDecimal amount) {
+        if (amount == null || amount.signum() <= 0) {
+            return false;
+        }
+        int rows = accountMapper.freezeBalance(accountNumber, amount);
+        if (rows > 0) {
+            evictAccountCache(accountNumber);
+        }
+        return rows > 0;
+    }
+
+    @Override
+    public boolean releaseBuyFunds(String accountNumber, BigDecimal amount) {
+        if (amount == null || amount.signum() <= 0) {
+            return false;
+        }
+        int rows = accountMapper.unfreezeBalance(accountNumber, amount);
+        if (rows > 0) {
+            evictAccountCache(accountNumber);
+        }
+        return rows > 0;
+    }
+
+    @Override
+    public boolean settleBuyFunds(String accountNumber, BigDecimal freezeAmount, BigDecimal actualAmount) {
+        // 返回 0 行 = 冻结额或余额不足（记账已不一致），必须让调用方回滚，绝不能静默继续
+        int rows = accountMapper.settleBuy(accountNumber, freezeAmount, actualAmount);
+        if (rows > 0) {
+            evictAccountCache(accountNumber);
+        }
+        return rows > 0;
+    }
+
+    @Override
+    public void creditBalance(String accountNumber, BigDecimal amount) {
+        accountMapper.addBalance(accountNumber, amount);
         evictAccountCache(accountNumber);
     }
 

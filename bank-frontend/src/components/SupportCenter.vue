@@ -2,7 +2,7 @@
   <div class="support-center">
     <el-tabs v-model="tab">
       <el-tab-pane label="提交工单/投诉" name="submit">
-        <el-form :model="form" label-width="90px">
+        <el-form :model="form" label-width="90px" class="ticket-form">
           <el-form-item label="选择银行卡">
             <el-select v-model="form.accountNumber" placeholder="请选择本人名下的银行卡" style="width:100%" :loading="accountsLoading">
               <el-option
@@ -28,7 +28,7 @@
             <el-input v-model="form.description" type="textarea" :rows="4" placeholder="请描述遇到的问题或投诉内容" maxlength="1000" show-word-limit />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" :loading="submitting" @click="handleSubmit">提交</el-button>
+            <el-button type="primary" :loading="submitting" @click="handleSubmit" class="submit-btn">提交</el-button>
           </el-form-item>
         </el-form>
       </el-tab-pane>
@@ -165,5 +165,98 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.support-center { padding: 4px 0; }
+.support-center {
+  padding: var(--space-1) 0;
+}
+
+.ticket-form {
+  max-width: 520px;
+}
+
+.submit-btn {
+  width: 100%;
+  font-family: var(--font-sans);
+}
+
+:deep(.el-tabs__item) {
+  color: var(--color-muted-foreground);
+}
+
+:deep(.el-tabs__item.is-active) {
+  color: var(--color-primary);
+}
+
+:deep(.el-tabs__active-bar) {
+  background-color: var(--color-primary);
+}
+
+:deep(.el-form-item__label) {
+  color: var(--color-muted-foreground);
+  font-family: var(--font-sans);
+}
+
+:deep(.el-input__wrapper),
+:deep(.el-textarea__inner) {
+  background: var(--color-card);
+  border: 1px solid var(--glass-border);
+  box-shadow: none;
+  color: var(--color-foreground);
+}
+
+:deep(.el-input__wrapper:hover),
+:deep(.el-textarea__inner:hover) {
+  border-color: var(--color-border-hover);
+}
+
+:deep(.el-input__wrapper:focus-within),
+:deep(.el-textarea__inner:focus) {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+:deep(.el-input__inner) {
+  color: var(--color-foreground);
+}
+
+:deep(.el-button--primary) {
+  --el-button-bg-color: var(--color-primary);
+  --el-button-border-color: var(--color-primary);
+  --el-button-text-color: var(--color-on-primary);
+  --el-button-hover-bg-color: var(--color-secondary);
+  --el-button-hover-border-color: var(--color-secondary);
+}
+
+:deep(.el-table) {
+  --el-table-header-bg-color: var(--color-card);
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  --el-table-border-color: var(--glass-border);
+  --el-table-text-color: var(--color-foreground);
+  --el-table-header-text-color: var(--color-muted-foreground);
+  --el-table-row-hover-bg-color: var(--color-muted);
+}
+
+:deep(.el-table .el-table__row--striped td.el-table__cell) {
+  background: color-mix(in srgb, var(--color-card) 50%, var(--color-muted));
+}
+
+:deep(.el-tag--danger) {
+  --el-tag-bg-color: color-mix(in srgb, var(--color-destructive) 15%, transparent);
+  --el-tag-text-color: var(--color-destructive);
+}
+
+:deep(.el-tag--success) {
+  --el-tag-bg-color: color-mix(in srgb, var(--color-success) 15%, transparent);
+  --el-tag-text-color: var(--color-success);
+}
+
+:deep(.el-tag--warning) {
+  --el-tag-bg-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  --el-tag-text-color: var(--color-primary);
+}
+
+:deep(.el-tag--info) {
+  --el-tag-bg-color: var(--color-muted);
+  --el-tag-text-color: var(--color-muted-foreground);
+}
 </style>

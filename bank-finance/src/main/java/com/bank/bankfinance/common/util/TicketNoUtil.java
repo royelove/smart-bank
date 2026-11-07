@@ -30,6 +30,10 @@ public class TicketNoUtil {
         return "O" + timestamp() + randomHex(6);
     }
 
+    public static String requestId() {
+        return "REQ" + timestamp() + randomHex(8);
+    }
+
     private static String timestamp() {
         return LocalDateTime.now().format(TS);
     }

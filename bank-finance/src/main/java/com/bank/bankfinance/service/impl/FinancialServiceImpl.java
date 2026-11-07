@@ -22,11 +22,14 @@ import com.bank.bankfinance.vo.FinancialProductVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -39,6 +42,9 @@ import static com.bank.bankfinance.common.constant.ResponseCode.*;
 
 @Service
 public class FinancialServiceImpl extends ServiceImpl<FinancialProductMapper, FinancialProduct> implements FinancialService {
+
+    /** 新增：定时结算需要逐笔记录失败原因（原来失败是静默的） */
+    private static final Logger log = LoggerFactory.getLogger(FinancialServiceImpl.class);
 
     @Autowired
     private FinancialProductMapper financialProductMapper;
@@ -64,6 +70,10 @@ public class FinancialServiceImpl extends ServiceImpl<FinancialProductMapper, Fi
     @Autowired
     private RedisUtil redisUtil;
 
+    /** 新增：定时结算改为「每笔持仓一个独立事务」，一笔失败不影响其它持仓 */
+    @Autowired
+    private TransactionTemplate transactionTemplate;
+
     @Override
     public List<FinancialProductVO> listProducts() {
         List<FinancialProduct> products = this.lambdaQuery()
@@ -85,12 +95,19 @@ public class FinancialServiceImpl extends ServiceImpl<FinancialProductMapper, Fi
     @Transactional
     @Override
     public void purchase(PurchaseDTO purchaseDTO) {
-        Boolean first = redisUtil.setIfAbsent("idem:purchase:" + purchaseDTO.getRequestId(), "1", 10, TimeUnit.MINUTES);
+        String accountNumber = purchaseDTO.getAccountNumber();
+        /*
+         * 修复记录：原幂等 key 是 "idem:purchase:" + requestId，没带账户维度。
+         * requestId 由客户端生成，于是 A 用户撞上（或猜到）B 用户用过的 requestId 就会被判成
+         * 重复提交而买不进去；反过来，恶意方只要复用同一个 requestId 就能让别人 10 分钟内无法购买。
+         * 幂等的作用域应该是「谁的哪一次请求」，改为按「账户 + requestId」定 key。
+         */
+        String idemKey = "idem:purchase:" + accountNumber + ":" + purchaseDTO.getRequestId();
+        Boolean first = redisUtil.setIfAbsent(idemKey, "1", 10, TimeUnit.MINUTES);
         if (!Boolean.TRUE.equals(first)) {
             throw new BusinessException(IDEMPOTENT_REJECTED);
         }
         try {
-            String accountNumber = purchaseDTO.getAccountNumber();
             Account account = validateAccountAccess(accountNumber);
             FinancialProduct product = financialProductMapper.selectById(purchaseDTO.getProductId());
             if (product == null) {
@@ -103,23 +120,36 @@ public class FinancialServiceImpl extends ServiceImpl<FinancialProductMapper, Fi
             if (amount.compareTo(product.getMinAmount()) < 0) {
                 throw new BusinessException(TRANSACTION_INVALID_INSUFFICIENT);
             }
-            if (amount.compareTo(product.getRemainingAmount()) > 0) {
-                throw new BusinessException(TRANSACTION_INVALID_INSUFFICIENT);
-            }
             if (account.getAccountStatus() == 0) {
                 throw new BusinessException(TRANSACTION_INVALID_FREEZE);
-            }
-            if (amount.compareTo(account.getAccountBalance()) > 0) {
-                throw new BusinessException(TRANSACTION_INVALID_INSUFFICIENT);
             }
             if (!passwordEncoder.matches(purchaseDTO.getPassword(), account.getPassword())) {
                 throw new BusinessException(PASSWORD_INVALID);
             }
             riskAssessmentService.assessAndBlock(accountNumber, amount, null);
-            account.setAccountBalance(account.getAccountBalance().subtract(amount));
-            accountMapper.updateById(account);
-            product.setRemainingAmount(product.getRemainingAmount().subtract(amount));
-            financialProductMapper.updateById(product);
+            /*
+             * 修复记录（账户侧）：原实现是「getAccountEntity 拿到内存快照 → setAccountBalance(余额-amount)
+             * → accountMapper.updateById(account)」。三个问题：
+             * 1) 守卫用余额而不是可用资金（余额-冻结），可以拿已委托冻结的股票买单资金去买理财；
+             * 2) 读-算-写会把读取时的整行字段写回，并发下互相覆盖（丢失更新）；
+             * 3) getAccountEntity 可能直接命中 30 分钟的 Redis 缓存，余额快照更旧。
+             * 改为原子条件更新，返回 0 行即可用资金不足。
+             */
+            if (accountMapper.deductAvailableBalance(accountNumber, amount) == 0) {
+                throw new BusinessException(TRANSACTION_INVALID_INSUFFICIENT);
+            }
+            /*
+             * 修复记录（产品侧）：原来的额度校验是「读出 product.remainingAmount 比一下，
+             * 再 setRemainingAmount(remaining - amount) + updateById(product)」。
+             * 并发购买时两个请求读到同一个 remaining_amount，各自减完再写回，后写的覆盖先写的，
+             * 于是产品被超卖（额度永远减不到 0，卖出去的总额可以超过 total_amount）。
+             * 改成数据库层的条件更新：剩余额度不足时返回 0 行。
+             */
+            if (financialProductMapper.reserveAmount(product.getId(), amount) == 0) {
+                throw new BusinessException(TRANSACTION_INVALID_INSUFFICIENT);
+            }
+            // 余额已变，清缓存（处于事务中，实际删除会推迟到事务完成之后）
+            accountService.evictAccountCache(accountNumber);
 
             FinancialHolding holding = new FinancialHolding();
             holding.setAccountNumber(accountNumber);
@@ -143,7 +173,7 @@ public class FinancialServiceImpl extends ServiceImpl<FinancialProductMapper, Fi
             trade.setUpdateDate(now);
             tradeService.saveTrade(trade);
         } catch (Exception e) {
-            redisUtil.delete("idem:purchase:" + purchaseDTO.getRequestId());
+            redisUtil.delete(idemKey);
             throw e;
         }
     }
@@ -209,8 +239,21 @@ public class FinancialServiceImpl extends ServiceImpl<FinancialProductMapper, Fi
         return account;
     }
 
+    /**
+     * 每日凌晨的到期自动结算。
+     *
+     * <p>修复记录：原方法在整个 for 循环外面套了一个 {@code @Transactional}，且循环体里
+     * 「账户查不到 / 账户已冻结就 continue」「claimHolding 成功但 settleHolding 直接 return」
+     * 都不报错。两个后果：
+     * 1) 任何一笔持仓结算抛异常（例如插交易流水失败），当天<b>所有</b>已到期的持仓一起回滚，
+     *    而回滚是静默的，日志里只有异常没有「哪些持仓没结」；
+     * 2) 账户冻结的持仓被 {@code continue} 跳过后，状态位仍是 0，看起来没问题；
+     *    但 {@code claimHolding} 已经把状态改成 1 而 {@code settleHolding} 又提前 return 的那条路径，
+     *    是「持仓标记已赎回、钱没到账」，用户的资金被静默没收。
+     * 现在改为「每笔持仓一个独立事务」，失败只影响自己并留 error 日志，状态位一起回滚，
+     * 下一轮定时任务会重试；账户不存在/冻结则明确跳过并告警。
+     */
     @Scheduled(cron = "0 0 1 * * ?")
-    @Transactional
     public void autoSettleMaturedHoldings() {
         LocalDateTime now = LocalDateTime.now();
         List<FinancialHolding> holdings = financialHoldingMapper.selectList(
@@ -221,12 +264,27 @@ public class FinancialServiceImpl extends ServiceImpl<FinancialProductMapper, Fi
             if (!isMatured(holding, now)) {
                 continue;
             }
-            Account account = accountService.getAccountEntity(holding.getAccountNumber());
-            if (account == null || account.getAccountStatus() == 0) {
+            try {
+                Account account = accountService.getAccountEntity(holding.getAccountNumber());
+                if (account.getAccountStatus() == 0) {
+                    log.warn("理财到期结算跳过：账户已冻结，持仓保持未结算等待人工处理, holdingId={}, accountNumber={}",
+                            holding.getId(), holding.getAccountNumber());
+                    continue;
+                }
+            } catch (BusinessException e) {
+                log.warn("理财到期结算跳过：账户不存在, holdingId={}, accountNumber={}",
+                        holding.getId(), holding.getAccountNumber());
                 continue;
             }
-            if (claimHolding(holding, now)) {
-                settleHolding(holding, now);
+            try {
+                transactionTemplate.executeWithoutResult(status -> {
+                    if (claimHolding(holding, now)) {
+                        settleHolding(holding, now);
+                    }
+                });
+            } catch (Exception e) {
+                log.error("理财到期结算失败，持仓已回滚为未结算状态，等待下次重试: holdingId={}, accountNumber={}",
+                        holding.getId(), holding.getAccountNumber(), e);
             }
         }
     }
@@ -245,6 +303,17 @@ public class FinancialServiceImpl extends ServiceImpl<FinancialProductMapper, Fi
         return financialHoldingMapper.update(null, uw) > 0;
     }
 
+    /**
+     * 赎回入账。
+     *
+     * <p>修复记录：原实现先由调用方 {@code claimHolding} 把持仓状态改成「已赎回」，
+     * 然后这里「查不到账户 / 账户已冻结就直接 return」。于是钱没入账、持仓却已经是已赎回，
+     * 用户的资金被静默没收，连一条日志都没有。另外入账用的是「读余额 → 加 → updateById」，
+     * 同样是丢失更新。
+     * 现在：入账失败必须抛异常，让调用方事务把状态位一起回滚；是否允许结算
+     * （账户是否存在/是否冻结）由调用方先判断——用户主动赎回时直接报错，
+     * 定时任务则跳过并告警，留到下一轮。
+     */
     private void settleHolding(FinancialHolding holding, LocalDateTime now) {
         BigDecimal totalReturn = holding.getInvestAmount();
         String tradeType = "理财提前赎回";
@@ -256,12 +325,11 @@ public class FinancialServiceImpl extends ServiceImpl<FinancialProductMapper, Fi
             totalReturn = totalReturn.add(expectedReturn);
             tradeType = "理财赎回";
         }
-        Account account = accountService.getAccountEntity(holding.getAccountNumber());
-        if (account == null || account.getAccountStatus() == 0) {
-            return;
+        if (accountMapper.addBalance(holding.getAccountNumber(), totalReturn) == 0) {
+            throw new IllegalStateException("理财结算入账失败，账户不存在: accountNumber=" + holding.getAccountNumber()
+                    + ", holdingId=" + holding.getId() + ", amount=" + totalReturn);
         }
-        account.setAccountBalance(account.getAccountBalance().add(totalReturn));
-        accountMapper.updateById(account);
+        accountService.evictAccountCache(holding.getAccountNumber());
 
         Trade trade = new Trade();
         trade.setTradeNo(TicketNoUtil.tradeNo());

@@ -11,7 +11,7 @@
         <el-input v-model="form.confirmPassword" type="password" placeholder="再次输入新密码" show-password maxlength="6" />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" size="large" :loading="loading" @click="handleSubmit" style="width:100%">确认修改</el-button>
+        <el-button type="primary" size="large" :loading="loading" @click="handleSubmit" class="submit-btn">确认修改</el-button>
       </el-form-item>
     </el-form>
 
@@ -70,6 +70,61 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped>
-.pwd-form { max-width: 400px; margin: 0 auto; padding: 20px 0; }
-.result-alert { max-width: 400px; margin: 0 auto; }
+.change-password {
+  width: 100%;
+}
+
+.pwd-form {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: var(--space-5) 0;
+}
+
+.result-alert {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.submit-btn {
+  width: 100%;
+  font-family: var(--font-sans);
+}
+
+:deep(.el-form-item__label) {
+  color: var(--color-muted-foreground);
+  font-family: var(--font-sans);
+}
+
+:deep(.el-input__wrapper) {
+  background: var(--color-card);
+  border: 1px solid var(--glass-border);
+  box-shadow: none;
+}
+
+:deep(.el-input__wrapper:hover) {
+  border-color: var(--color-border-hover);
+}
+
+:deep(.el-input__wrapper:focus-within) {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+:deep(.el-input__inner) {
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+}
+
+:deep(.el-input__inner::placeholder) {
+  color: var(--color-muted-foreground);
+}
+
+:deep(.el-button--primary) {
+  --el-button-bg-color: var(--color-primary);
+  --el-button-border-color: var(--color-primary);
+  --el-button-text-color: var(--color-on-primary);
+  --el-button-hover-bg-color: var(--color-secondary);
+  --el-button-hover-border-color: var(--color-secondary);
+  --el-button-hover-text-color: var(--color-on-primary);
+}
 </style>

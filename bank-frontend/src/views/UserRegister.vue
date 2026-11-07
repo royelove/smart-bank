@@ -87,26 +87,191 @@ const handleRegister = async () => {
 </script>
 
 <style scoped>
-.register-page { min-height: 100vh; display: flex; justify-content: center; align-items: center; background: radial-gradient(1200px 600px at 30% 20%, rgba(212,176,106,0.07) 0%, transparent 60%), var(--vault-bg); padding: 40px 20px; }
-.register-container { position: relative; width: 480px; max-width: 100%; background: linear-gradient(180deg, var(--vault-panel-2), var(--vault-panel)); border: 1px solid var(--vault-line-strong); border-radius: 24px; box-shadow: 0 32px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04); overflow: hidden; animation: fadeInUp 0.5s ease-out; }
-@keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-.register-header { padding: 28px 32px 20px; border-bottom: 1px solid var(--vault-line); position: relative; }
-.back-link { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--vault-text-3); text-decoration: none; margin-bottom: 16px; transition: color 0.2s; }
-.back-link:hover { color: var(--vault-accent); }
-.header-brand { text-align: center; }
-.header-logo { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 16px; }
-.header-logo span { font-size: 20px; font-weight: 700; color: var(--vault-text); letter-spacing: 2px; }
-.header-brand h2 { font-size: 22px; font-weight: 700; color: var(--vault-text); letter-spacing: 0.1em; margin-bottom: 4px; }
-.header-brand p { font-size: 13px; color: var(--vault-text-3); }
-.step-content { padding: 24px 32px 32px; }
-.register-form { max-width: 360px; margin: 0 auto; }
-.form-row { margin-bottom: 20px; }
-.input-label { display: block; font-size: 13px; font-weight: 600; color: var(--vault-text-2); margin-bottom: 6px; letter-spacing: 0.05em; }
-.register-form :deep(.el-input__wrapper) { height: 46px; border-radius: 10px !important; }
-.step-actions { max-width: 360px; margin: 24px auto 0; }
-.submit-btn { width: 100%; height: 48px; background: linear-gradient(135deg, #b08d4a, #d4b06a); border: none; color: #fff; font-size: 16px; font-weight: 600; border-radius: 10px; box-shadow: 0 0 18px rgba(212,176,106,0.2), inset 0 0 0 1px rgba(255,255,255,0.08); }
-.submit-btn:hover { background: linear-gradient(135deg, #c9a458, #e6c98a); }
-.form-footer { text-align: center; margin-top: 16px; font-size: 13px; color: var(--vault-text-3); }
-.link { color: var(--vault-accent); text-decoration: none; font-weight: 600; }
-.link:hover { color: #e6c98a; }
+.register-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background:
+    radial-gradient(1200px 600px at 30% 20%, rgba(139, 92, 246, 0.06) 0%, transparent 60%),
+    var(--color-background);
+  padding: 40px 20px;
+  font-family: var(--font-sans);
+}
+
+.register-container {
+  position: relative;
+  width: 480px;
+  max-width: 100%;
+  background: var(--color-card);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.register-header {
+  padding: var(--space-8) var(--space-9) var(--space-7);
+  border-bottom: 1px solid var(--color-border);
+  position: relative;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-sm);
+  color: var(--color-muted-foreground);
+  text-decoration: none;
+  margin-bottom: var(--space-5);
+  cursor: pointer;
+  transition: color var(--transition-fast) ease;
+}
+
+.back-link:hover {
+  color: var(--color-primary);
+}
+
+.back-link svg {
+  width: 16px;
+  height: 16px;
+}
+
+.header-brand {
+  text-align: center;
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.header-logo svg {
+  width: 28px;
+  height: 28px;
+  color: var(--color-primary);
+}
+
+.header-logo span {
+  font-size: var(--font-h3);
+  font-weight: 700;
+  color: var(--color-foreground);
+  letter-spacing: 2px;
+}
+
+.header-brand h2 {
+  font-size: var(--font-title);
+  font-weight: 700;
+  color: var(--color-foreground);
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-2);
+}
+
+.header-brand p {
+  font-size: var(--font-body);
+  color: var(--color-muted-foreground);
+}
+
+.step-content {
+  padding: var(--space-7) var(--space-9) var(--space-9);
+}
+
+.register-form {
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.form-row {
+  margin-bottom: var(--space-6);
+}
+
+.input-label {
+  display: block;
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+  margin-bottom: var(--space-2);
+  letter-spacing: 0.02em;
+}
+
+.register-form :deep(.el-input__wrapper) {
+  height: var(--space-12);
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 0 0 1px var(--color-border) !important;
+  background: var(--color-muted);
+  transition: all var(--transition-fast) ease;
+}
+
+.register-form :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 2px var(--color-primary), 0 0 16px rgba(245, 158, 11, 0.15) !important;
+}
+
+.register-form :deep(.el-input__inner) {
+  color: var(--color-foreground);
+}
+
+.register-form :deep(.el-input__inner::placeholder) {
+  color: var(--color-muted-foreground);
+}
+
+.step-actions {
+  max-width: 360px;
+  margin: var(--space-7) auto 0;
+}
+
+.submit-btn {
+  width: 100%;
+  height: var(--space-12);
+  background: var(--color-primary);
+  border: none;
+  color: var(--color-on-primary);
+  font-size: var(--font-base);
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast) ease;
+}
+
+.submit-btn:hover {
+  background: var(--color-secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.35);
+}
+
+.submit-btn:active {
+  transform: translateY(0);
+}
+
+.form-footer {
+  text-align: center;
+  margin-top: var(--space-6);
+  font-size: var(--font-body);
+  color: var(--color-muted-foreground);
+}
+
+.link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--transition-fast) ease;
+}
+
+.link:hover {
+  color: var(--color-secondary);
+}
+
+@media (max-width: 480px) {
+  .register-header { padding: var(--space-6) var(--space-5) var(--space-5); }
+  .step-content { padding: var(--space-5); }
+}
 </style>

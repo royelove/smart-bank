@@ -13,7 +13,8 @@ public enum ResponseCode {
     PASSWORD_INVALID("400002","银行卡密码错误"),
 
     TRANSACTION_INVALID_FREEZE("500001","该账户已被冻结，无法进行任何操作"),
-    TRANSACTION_INVALID_FREEZE_TRANSFER("500001","转入账户已被冻结，无法进行任何操作"),
+    // 修复：原与 TRANSACTION_INVALID_FREEZE 共用 "500001"，客户端无法区分是哪个账户被冻结
+    TRANSACTION_INVALID_FREEZE_TRANSFER("500004","转入账户已被冻结，无法进行任何操作"),
     TRANSACTION_INVALID_INSUFFICIENT("500002","账户余额不足"),
     TRANSACTION_RISK_REJECTED("500003","交易被风控系统拦截"),
     TRANSACTION_INVALID_NOT_SAME_CODE("600001","两次密码不同"),
@@ -37,6 +38,17 @@ public enum ResponseCode {
 
     NO_ADMIN_PERMISSION("700001","无管理员权限"),
     NO_LOGIN("700002","用户未登录"),
+    /*
+     * 新增：token 缺失/非法/已登出的统一语义。
+     * 原来这个 "401000" 只以字符串字面量的形式出现在 JwtAuthenticationFilter 与
+     * GlobalExceptionHandler 里，没有对应的枚举常量，属于「隐式协议」；现在收敛为常量，
+     * 两处引用同一来源（JwtAuthenticationFilter.reject / GlobalExceptionHandler）。
+     */
+    TOKEN_INVALID("401000","登录已失效，请重新登录"),
+    /** 新增：限流命中。此前 RateLimitAspect 抛的是临时拼的字符串码。 */
+    RATE_LIMITED("429000","请求过于频繁，请稍后再试"),
+    // 新增：客服自助注册的可选密钥闸门（app.support.staff-register-key 非空时生效）
+    STAFF_REGISTER_FORBIDDEN("700003","客服注册未通过校验，请联系管理员"),
     UPDATE_FAILED("800001","更新失败"),
     VERIFICATION_CODE_INVALID("900001","验证码错误或已过期"),
     PHONE_NUMBER_MISMATCH("900002","手机号与账户不匹配"),
@@ -56,7 +68,10 @@ public enum ResponseCode {
     STOCK_QUOTE_UNAVAILABLE("920007","当前无行情，请稍后再试"),
     STOCK_DIRECTION_INVALID("920008","无效的交易方向"),
     STOCK_PRICE_TYPE_INVALID("920009","无效的委托类型"),
-    IDEMPOTENT_REJECTED("600019", "请勿重复提交");
+    STOCK_KLINE_PERIOD_INVALID("920010","不支持的K线周期"),
+    IDEMPOTENT_REJECTED("600019", "请勿重复提交"),
+    // 新增：并发 check-then-insert 撞唯一索引时使用，替代原先误导性的「系统繁忙」
+    DUPLICATE_RECORD("600020", "记录已存在，请勿重复提交");
     private String code;
     private String msg;
     ResponseCode(String code,String msg){

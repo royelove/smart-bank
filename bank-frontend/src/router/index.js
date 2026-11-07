@@ -9,6 +9,8 @@ import UserDashboard from '../views/UserDashboard.vue'
 import CardTrade from '../views/CardTrade.vue'
 import SupportLogin from '../views/SupportLogin.vue'
 import SupportDashboard from '../views/SupportDashboard.vue'
+import RankBoard from '../components/RankBoard.vue'
+import KlineChart from '../components/KlineChart.vue'
 
 const routes = [
     { path: '/', redirect: '/user/login' },
@@ -19,7 +21,9 @@ const routes = [
     { path: '/user/login', component: UserLogin },
     { path: '/user/register', component: UserRegister },
     { path: '/user/dashboard', component: UserDashboard, meta: { requiresAuth: true } },
-    { path: '/trade/:accountNumber', component: CardTrade, meta: { requiresAuth: true } },
+    { path: '/trade/:accountNumber', redirect: '/dashboard' },
+    { path: '/rank', component: RankBoard, meta: { requiresAuth: true } },
+    { path: '/kline/:stockCode', component: KlineChart, meta: { requiresAuth: true } },
     { path: '/support/login', component: SupportLogin },
     { path: '/support', component: SupportDashboard }
 ]

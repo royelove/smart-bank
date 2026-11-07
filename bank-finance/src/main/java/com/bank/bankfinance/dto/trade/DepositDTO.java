@@ -23,6 +23,7 @@ public class DepositDTO {
     @NotBlank
     private String password;
     @NotBlank(message = "请求Id不能为空")
+    //requestId的意义是用来存入redis的，从而以唯一的requestId来实现幂等性
     private String requestId;
     DepositDTO() {}
 }

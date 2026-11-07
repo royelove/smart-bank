@@ -50,16 +50,19 @@ public class AccountController {
     private static final String TOKEN_BLACKLIST_PREFIX = "token:blacklist:";
 
     @PostMapping("/deposit")
+    @RateLimit(maxRequests = 10, timeWindow = 1, timeUnit = TimeUnit.MINUTES, message = "充值操作过于频繁，请稍后再试")
     public Result<Void> deposit(@Valid @RequestBody DepositDTO depositDTO) {
         accountService.deposit(depositDTO);
         return Result.success();
     }
     @PostMapping("/transfer")
+    @RateLimit(maxRequests = 10, timeWindow = 1, timeUnit = TimeUnit.MINUTES, message = "转账操作过于频繁，请稍后再试")
     public Result<Void> transfer(@Valid @RequestBody TransferDTO transferDTO) {
         accountService.transfer(transferDTO);
         return Result.success();
     }
     @PostMapping("/withdraw")
+    @RateLimit(maxRequests = 10, timeWindow = 1, timeUnit = TimeUnit.MINUTES, message = "提现操作过于频繁，请稍后再试")
     public Result<Void> withdraw(@Valid @RequestBody WithdrawDTO withdrawDTO) {
         accountService.withdraw(withdrawDTO);
         return Result.success();
@@ -69,7 +72,9 @@ public class AccountController {
         AccountVO vo = accountService.getAccountVO(accountNumber);
         return Result.success(vo);
     }
+    // 修复：注册接口此前无限流，可被批量刷号（配合唯一索引只会得到大量 500）。
     @PostMapping("/register")
+    @RateLimit(maxRequests = 5, timeWindow = 1, timeUnit = TimeUnit.HOURS, message = "注册过于频繁，请稍后再试")
     public Result<Void> register(@Valid @RequestBody RegisterDTO registerDTO) {
         accountService.register(registerDTO);
         return Result.success();
@@ -104,7 +109,9 @@ public class AccountController {
         }
         return Result.success(trendForecastService.forecast(accountNumber));
     }
+    // 修复：改密码接口此前无限流，可被用来暴力猜测原密码。
     @PostMapping("/updatePsw")
+    @RateLimit(maxRequests = 5, timeWindow = 10, timeUnit = TimeUnit.MINUTES, message = "操作过于频繁，请稍后再试")
     public Result<Void> updatePsw(@Valid @RequestBody UpdatePsdDTO updatePsdDTO) {
         accountService.updatePsd(updatePsdDTO);
         return Result.success();
@@ -114,12 +121,17 @@ public class AccountController {
         accountService.updateProfile(updateProfileDTO);
         return Result.success();
     }
+    // 修复：发码接口此前无限流，可被用来轰炸任意手机号（短信费用 + 骚扰）。
+    // maxRequests=1 + 60s 窗口 == 同一手机号/IP 每 60 秒只能发一次。
     @PostMapping("/sendCode")
+    @RateLimit(maxRequests = 1, timeWindow = 60, timeUnit = TimeUnit.SECONDS, message = "验证码发送过于频繁，请60秒后再试")
     public Result<Void> sendCode(@Valid @RequestBody SendCodeDTO sendCodeDTO) {
         accountService.sendVerificationCode(sendCodeDTO);
         return Result.success();
     }
+    // 修复：重置密码接口此前无限流，可被用来暴力猜测 6 位验证码。
     @PostMapping("/resetPassword")
+    @RateLimit(maxRequests = 5, timeWindow = 10, timeUnit = TimeUnit.MINUTES, message = "操作过于频繁，请稍后再试")
     public Result<Void> resetPassword(@Valid @RequestBody ResetPasswordDTO resetPasswordDTO) {
         accountService.resetPassword(resetPasswordDTO);
         return Result.success();

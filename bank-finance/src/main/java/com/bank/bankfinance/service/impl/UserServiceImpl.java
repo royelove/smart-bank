@@ -1,7 +1,6 @@
 package com.bank.bankfinance.service.impl;
 
 import com.bank.bankfinance.common.exception.BusinessException;
-import com.bank.bankfinance.common.util.RedisUtil;
 import com.bank.bankfinance.dto.user.UserRegisterDTO;
 import com.bank.bankfinance.dto.user.UserUpdatePsdDTO;
 import com.bank.bankfinance.entity.Account;
@@ -23,7 +22,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.bank.bankfinance.common.constant.ResponseCode.*;
@@ -31,38 +29,36 @@ import static com.bank.bankfinance.common.constant.ResponseCode.*;
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
-    private static final String USER_CACHE_PREFIX = "user:cache:";
-    private static final long CACHE_EXPIRE_MINUTES = 30;
     @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
     private AccountMapper accountMapper;
     @Autowired
     private FaceService faceService;
-    @Autowired
-    private RedisUtil redisUtil;
 
     @Autowired
     private IdCardLibMapper idCardLibMapper;
 
 
+    /**
+     * 按手机号取用户（登录流程专用）。
+     *
+     * <p>修复记录：原实现把整个 {@code User} 实体写进 Redis 的 {@code user:cache:<phone>}，
+     * 缓存 30 分钟，而该实体同时携带 <b>bcrypt 口令散列</b>和<b>人脸特征模板</b>。两个后果：
+     * <ol>
+     *   <li>口令散列与生物特征被复制到了第二个存储系统。Redis 通常没有数据库同等的访问控制、
+     *       审计与静态加密，一旦 Redis 可读就等于拿到全量凭据与生物特征，且无法通过改密码挽回。</li>
+     *   <li>缓存<b>没有任何失效路径</b>：{@code updatePsw} 只更新数据库，登录仍从缓存取旧散列，
+     *       于是「改完密码后旧密码在最长 30 分钟内继续可用、新密码反而登录失败」——
+     *       对用户而言就是密码改不掉。</li>
+     * </ol>
+     * 该方法只服务于登录（{@code /user/login} 已限流 5 次/分钟），改为直接查库，
+     * 用一次很便宜的索引查询换掉「凭据外泄 + 密码改不掉」两个问题。
+     */
     public User getUserEntity(String userPhone){
-        try{
-            User cached = redisUtil.get(USER_CACHE_PREFIX + userPhone);
-            if(cached != null){
-                return cached;
-            }
-        }catch(Exception e){
-            log.warn("获取Redis缓存失败，查询SQL数据库");
-        }
         User user = this.lambdaQuery().eq(User::getUserPhone,userPhone).one();
         if(user == null){
             throw new BusinessException(BANK_ID_INVALID);
-        }
-        try{
-            redisUtil.set(USER_CACHE_PREFIX + userPhone,user,CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES);
-        }catch(Exception e){
-            log.warn("Redis 缓存写入失败: {}");
         }
         return user;
     }
@@ -220,6 +216,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         user.setPassword(passwordEncoder.encode(userUpdatePsdDTO.getNewPassword()));
         this.updateById(user);
+        // 说明：修复后 getUserEntity 不再缓存 User 实体，改密码即刻生效（旧实现需等 30 分钟缓存过期）。
     }
 
     private AccountVO toAccountVO(Account account) {

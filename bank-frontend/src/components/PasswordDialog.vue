@@ -5,7 +5,7 @@
         <div class="modal-container">
           <div class="modal-header">
             <div class="security-badge">
-              <el-icon :size="16" color="var(--vault-up)"><Lock /></el-icon>
+              <el-icon :size="16" color="var(--color-success)"><Lock /></el-icon>
               <span>安全加密通道</span>
             </div>
             <button class="close-btn" @click="handleCancel">
@@ -15,7 +15,7 @@
 
           <div class="modal-body">
             <div class="bank-brand">
-              <el-icon :size="32" color="var(--vault-accent)"><CreditCard /></el-icon>
+              <el-icon :size="32" color="var(--color-accent)"><CreditCard /></el-icon>
               <span class="brand-name">钱钱银行</span>
             </div>
 
@@ -83,10 +83,6 @@
           </div>
 
           <div class="modal-footer">
-            <div class="security-note">
-              <el-icon :size="12" color="var(--vault-text-3)"><Warning /></el-icon>
-              <span>请注意周围环境，防止密码泄露</span>
-            </div>
           </div>
         </div>
       </div>
@@ -177,12 +173,12 @@ const handleCancel = () => {
 .modal-container {
   position: relative;
   width: 380px;
-  background: linear-gradient(180deg, #131c2e 0%, #0d1524 100%);
-  border: 1px solid var(--vault-line-strong);
-  border-radius: 20px;
-  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(212, 176, 106, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  background: var(--color-card);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
   overflow: hidden;
-  animation: modalSlideIn 0.3s ease-out;
+  animation: modalSlideIn var(--transition-slow) ease-out;
 }
 
 @keyframes modalSlideIn {
@@ -194,34 +190,42 @@ const handleCancel = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  background: linear-gradient(90deg, #0c1524, #12203a);
-  border-bottom: 1px solid var(--vault-line);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-muted);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .security-badge {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--vault-up);
+  gap: var(--space-2);
+  font-size: var(--font-sm);
+  color: var(--color-success);
   font-weight: 500;
   letter-spacing: 0.05em;
+  font-family: var(--font-sans);
 }
 
 .close-btn {
   background: none;
   border: none;
-  color: var(--vault-text-3);
+  color: var(--color-muted-foreground);
   cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.2s;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.close-btn:hover { color: #fff; background: rgba(212,176,106,0.1); }
+
+.close-btn:hover {
+  color: var(--color-foreground);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
 
 .modal-body {
-  padding: 24px 28px 20px;
+  padding: var(--space-6) var(--space-7) var(--space-5);
   text-align: center;
 }
 
@@ -229,22 +233,51 @@ const handleCancel = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-.brand-name {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--vault-text);
-  letter-spacing: 2px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
 }
 
-.pin-display-area { margin-bottom: 20px; }
-.pin-label { font-size: 14px; color: var(--vault-text-2); margin-bottom: 12px; }
-.pin-dots { display: flex; justify-content: center; gap: 12px; margin-bottom: 8px; }
-.dot { font-size: 28px; line-height: 1; transition: all 0.2s; }
-.dot-filled { color: var(--vault-accent); text-shadow: 0 0 10px rgba(212,176,106,0.7); }
-.dot-empty { color: var(--vault-line-strong); }
+.brand-name {
+  font-size: var(--font-h3);
+  font-weight: 700;
+  color: var(--color-foreground);
+  letter-spacing: 2px;
+  font-family: var(--font-sans);
+}
+
+.pin-display-area {
+  margin-bottom: var(--space-5);
+}
+
+.pin-label {
+  font-size: var(--font-base);
+  color: var(--color-muted-foreground);
+  margin-bottom: var(--space-3);
+  font-family: var(--font-sans);
+}
+
+.pin-dots {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.dot {
+  font-size: 28px;
+  line-height: 1;
+  transition: all var(--transition-fast);
+}
+
+.dot-filled {
+  color: var(--color-accent);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--color-primary) 70%, transparent);
+}
+
+.dot-empty {
+  color: var(--color-border);
+}
+
 .hidden-input {
   position: absolute;
   opacity: 0;
@@ -255,94 +288,123 @@ const handleCancel = () => {
 
 .keypad {
   max-width: 280px;
-  margin: 0 auto 16px;
+  margin: 0 auto var(--space-4);
 }
+
 .keypad-row {
   display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
 }
+
 .key-btn {
   flex: 1;
-  height: 52px;
-  border: 1px solid var(--vault-line);
-  border-radius: 10px;
-  background: rgba(212,176,106,0.04);
-  font-size: 22px;
+  height: var(--space-13);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--color-muted);
+  font-size: var(--font-h3);
   font-weight: 600;
-  color: var(--vault-text);
+  color: var(--color-foreground);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--transition-fast);
   display: flex;
   align-items: center;
   justify-content: center;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  font-family: var(--font-mono);
 }
+
 .key-btn:hover {
-  background: rgba(212,176,106,0.12);
-  border-color: var(--vault-accent);
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-muted));
+  border-color: var(--color-primary);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(212,176,106,0.2);
+  box-shadow: var(--shadow-md);
 }
+
 .key-btn:active {
   transform: translateY(0);
   box-shadow: none;
-  background: rgba(212,176,106,0.18);
+  background: color-mix(in srgb, var(--color-primary) 18%, var(--color-muted));
 }
-.key-btn-clear { font-size: 14px; color: var(--vault-text-3); font-weight: 500; }
-.key-btn-back { color: var(--vault-text-2); }
 
-.confirm-row { display: flex; gap: 12px; }
-.btn-cancel, .btn-confirm {
+.key-btn-clear {
+  font-size: var(--font-base);
+  color: var(--color-muted-foreground);
+  font-weight: 500;
+  font-family: var(--font-sans);
+}
+
+.key-btn-back {
+  color: var(--color-muted-foreground);
+}
+
+.confirm-row {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.btn-cancel,
+.btn-confirm {
   flex: 1;
-  height: 44px;
-  border-radius: 10px;
-  font-size: 15px;
+  height: var(--space-11);
+  border-radius: var(--radius-md);
+  font-size: var(--font-base);
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: all 0.2s;
+  transition: all var(--transition-normal);
+  font-family: var(--font-sans);
 }
+
 .btn-cancel {
-  background: rgba(212,176,106,0.06);
-  border: 1px solid var(--vault-line);
-  color: var(--vault-text-2);
+  background: var(--color-muted);
+  border: 1px solid var(--glass-border);
+  color: var(--color-muted-foreground);
 }
-.btn-cancel:hover { background: rgba(212,176,106,0.1); }
+
+.btn-cancel:hover {
+  background: var(--color-card);
+  color: var(--color-foreground);
+}
+
 .btn-confirm {
-  background: linear-gradient(135deg, #b08d4a, #d4b06a);
-  color: #fff;
-  box-shadow: 0 0 18px rgba(212,176,106,0.25), inset 0 0 0 1px rgba(255,255,255,0.08);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-md);
 }
+
 .btn-confirm:hover:not(:disabled) {
-  box-shadow: 0 4px 16px rgba(212,176,106,0.4);
+  background: var(--color-secondary);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-1px);
 }
+
+.btn-confirm:active:not(:disabled) {
+  transform: translateY(0);
+}
+
 .btn-confirm:disabled {
-  background: var(--vault-line-strong);
-  color: var(--vault-text-dim);
+  background: var(--color-muted);
+  color: var(--color-muted-foreground);
   box-shadow: none;
   cursor: not-allowed;
 }
 
 .modal-footer {
-  padding: 10px 16px;
-  background: rgba(8,12,20,0.6);
-  border-top: 1px solid var(--vault-line);
-}
-.security-note {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 11px;
-  color: var(--vault-text-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-muted);
+  border-top: 1px solid var(--glass-border);
 }
 
-.bank-modal-enter-active, .bank-modal-leave-active {
-  transition: opacity 0.3s ease;
+.bank-modal-enter-active,
+.bank-modal-leave-active {
+  transition: opacity var(--transition-slow) ease;
 }
-.bank-modal-enter-from, .bank-modal-leave-to {
+
+.bank-modal-enter-from,
+.bank-modal-leave-to {
   opacity: 0;
 }
 </style>

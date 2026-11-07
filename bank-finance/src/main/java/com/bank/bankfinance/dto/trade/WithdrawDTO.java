@@ -17,6 +17,8 @@ public class WithdrawDTO {
     @DecimalMin("0.01")
     private BigDecimal amount;
     @NotBlank
-            private String password;
+    private String password;
+    @NotBlank
+    private String requestId;
     WithdrawDTO() {}
 }

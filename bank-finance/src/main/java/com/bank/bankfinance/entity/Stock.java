@@ -21,6 +21,12 @@ public class Stock {
     private BigDecimal prevClose;
     private BigDecimal currentPrice;
     private BigDecimal changePercent;
+    private BigDecimal highPrice;
+    private BigDecimal lowPrice;
+    private Long volume;
+    private BigDecimal amount;
+    private BigDecimal turnoverRate;
+    private BigDecimal totalShares;
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime creationDate;

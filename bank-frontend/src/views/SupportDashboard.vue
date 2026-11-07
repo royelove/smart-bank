@@ -1,567 +1,762 @@
 <template>
-  <div class="support-layout">
-    <aside class="support-aside">
-      <div class="aside-brand">
-        <div class="brand-icon">钱</div>
-        <div class="brand-text">
-          <div class="brand-title">钱钱银行</div>
-          <div class="brand-sub">客服管理后台</div>
+  <div class="support-page">
+    <!-- ============ 顶栏 · 全局导航 ============ -->
+    <header class="top-nav">
+      <div class="nav-left">
+        <button class="back-btn" @click="goBack" title="返回">
+          <el-icon :size="18"><ArrowLeft /></el-icon>
+        </button>
+        <div class="brand">
+          <div class="brand-emblem">钱</div>
+          <div class="brand-text">
+            <span class="brand-name">钱钱银行</span>
+            <span class="brand-en">PRIVATE BANKING</span>
+          </div>
         </div>
       </div>
 
-      <el-menu
-        :default-active="activeMenu"
-        class="aside-menu"
-        background-color="transparent"
-        text-color="rgba(212,176,106,0.72)"
-        active-text-color="#e6c98a"
-        @select="onMenuSelect"
-      >
-        <el-menu-item index="overview">
-          <el-icon><DataAnalysis /></el-icon>
-          <span>数据概览</span>
-        </el-menu-item>
-        <el-menu-item index="tickets">
-          <el-icon><Tickets /></el-icon>
-          <span>工单管理</span>
-        </el-menu-item>
-        <el-menu-item index="idcard">
-          <el-icon><Postcard /></el-icon>
-          <span>身份库管理</span>
-        </el-menu-item>
-      </el-menu>
-
-      <div class="aside-footer">客服人员专用通道</div>
-    </aside>
-
-    <main class="support-main">
-      <header class="support-header">
-        <div class="header-title">{{ headerTitle }}</div>
-        <div class="header-right">
-          <div class="server-status">
-            <span class="vault-status-dot"></span>
-            <span class="server-text">服务在线</span>
-          </div>
-          <el-tag v-if="activeMenu === 'tickets'" size="small" type="warning" effect="plain">当前视图：{{ statusText(activeStatus) }}</el-tag>
-          <div class="staff-info">
-            <el-icon><UserFilled /></el-icon>
-            <span>{{ staffName }}</span>
-          </div>
-          <el-button size="small" type="danger" plain @click="logout">退出登录</el-button>
+      <nav class="nav-center">
+        <div class="nav-item" @click="showRecords = true">
+          <el-icon :size="16"><Document /></el-icon><span>交易明细</span>
         </div>
-      </header>
+        <div class="nav-item" @click="showProducts = true">
+          <el-icon :size="16"><Coin /></el-icon><span>理财产品</span>
+        </div>
+        <div class="nav-item" @click="showHoldings = true">
+          <el-icon :size="16"><DataAnalysis /></el-icon><span>我的持仓</span>
+        </div>
+        <div class="nav-item" @click="showMarket = true">
+          <el-icon :size="16"><TrendCharts /></el-icon><span>股票行情</span>
+        </div>
+        <div class="nav-item" @click="showTrading = true">
+          <el-icon :size="16"><Odometer /></el-icon><span>股票交易</span>
+        </div>
+      </nav>
 
-      <section class="support-content">
-        <!-- 数据概览 -->
-        <template v-if="activeMenu === 'overview'">
-          <div class="stat-row">
-            <el-card shadow="hover" class="stat-card">
-              <div class="stat-num vault-num" style="color:var(--vault-accent)">{{ stats.total }}</div>
-              <div class="stat-label">工单总数</div>
-            </el-card>
-            <el-card shadow="hover" class="stat-card">
-              <div class="stat-num vault-num" style="color:var(--vault-down)">{{ stats.pending }}</div>
-              <div class="stat-label">待处理</div>
-            </el-card>
-            <el-card shadow="hover" class="stat-card">
-              <div class="stat-num vault-num" style="color:var(--vault-gold)">{{ stats.processing }}</div>
-              <div class="stat-label">处理中</div>
-            </el-card>
-            <el-card shadow="hover" class="stat-card">
-              <div class="stat-num vault-num" style="color:var(--vault-up)">{{ stats.closed }}</div>
-              <div class="stat-label">已关闭</div>
-            </el-card>
-            <el-card shadow="hover" class="stat-card invalid-card">
-              <div class="stat-num vault-num" style="color:var(--vault-text-3)">{{ stats.invalid }}</div>
-              <div class="stat-label">无效/恶意</div>
-            </el-card>
-          </div>
+      <div class="nav-right">
+        <div class="server-status">
+          <span class="vault-status-dot"></span>
+          <span class="server-text">服务在线</span>
+        </div>
+        <div class="header-time">
+          <el-icon :size="15"><Clock /></el-icon>
+          <span>{{ currentTime }}</span>
+        </div>
+        <el-dropdown trigger="click">
+          <span class="user-trigger">
+            <div class="user-avatar">{{ (accountInfo?.accountHolderName || '用')[0] }}</div>
+            <span class="user-name">{{ accountInfo?.accountHolderName || '用户' }}</span>
+            <el-icon :size="12"><ArrowDown /></el-icon>
+          </span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item @click="showProfile = true">
+                <el-icon><User /></el-icon> 个人信息
+              </el-dropdown-item>
+              <el-dropdown-item @click="showChangePwd = true">
+                <el-icon><Key /></el-icon> 修改密码
+              </el-dropdown-item>
+              <el-dropdown-item divided @click="showCardList = true">
+                <el-icon><CreditCard /></el-icon> 切换银行卡
+              </el-dropdown-item>
+              <el-dropdown-item @click="logout">
+                <el-icon><SwitchButton /></el-icon> 退出登录
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
+    </header>
 
-          <el-card class="todo-card">
-            <template #header>
-              <div class="card-header">
-                <span>最新待处理工单</span>
-                <el-button size="small" @click="goTickets">查看全部</el-button>
-              </div>
-            </template>
-            <el-table :data="pendingList" v-loading="loading" stripe style="width:100%">
-              <el-table-column prop="ticketNo" label="工单号" width="150" />
-              <el-table-column prop="categoryText" label="类型" width="90" />
-              <el-table-column prop="title" label="标题" min-width="160" show-overflow-tooltip />
-              <el-table-column prop="userName" label="用户名" width="100" />
-              <el-table-column label="情绪" width="80">
-                <template #default="{ row }">
-                  <el-tag :type="sentimentType(row.sentiment)" size="small">{{ row.sentiment || '--' }}</el-tag>
-                </template>
-              </el-table-column>
-              <el-table-column label="AI评分" width="90">
-                <template #default="{ row }">
-                  <span :style="{ color: scoreColor(row.aiScore) }">{{ row.aiScore ?? '--' }}</span>
-                </template>
-              </el-table-column>
-              <el-table-column label="创建时间" width="160">
-                <template #default="{ row }">{{ formatTime(row.creationDate) }}</template>
-              </el-table-column>
-              <el-table-column label="操作" width="100">
-                <template #default="{ row }">
-                  <el-button size="small" type="primary" @click="goTickets">去处理</el-button>
-                </template>
-              </el-table-column>
-            </el-table>
-            <el-empty v-if="!loading && pendingList.length === 0" description="暂无待处理工单" :image-size="70" />
-          </el-card>
-        </template>
+    <!-- ============ 巨幅资产面板 ============ -->
+    <section class="hero">
+      <div class="vault-contour"></div>
+      <div class="hero-glow"></div>
 
-        <!-- 工单管理 -->
-        <template v-else-if="activeMenu === 'tickets'">
-          <el-card class="ticket-card">
-            <template #header>
-              <div class="card-header">
-                <span>客户服务工单</span>
-                <el-button size="small" @click="loadAll()">刷新</el-button>
-              </div>
-            </template>
-
-            <el-tabs v-model="activeStatus">
-              <el-tab-pane label="全部" name="all" />
-              <el-tab-pane label="待处理" name="0" />
-              <el-tab-pane label="处理中" name="1" />
-              <el-tab-pane label="已回复" name="2" />
-              <el-tab-pane label="已关闭" name="3" />
-              <el-tab-pane label="无效/恶意" name="invalid" />
-            </el-tabs>
-
-            <el-table
-              :data="filteredTickets"
-              v-loading="loading"
-              stripe
-              style="width:100%"
-              :row-class-name="rowClass"
+      <div class="hero-inner">
+        <div class="hero-top">
+          <div class="account-chips">
+            <div
+              v-for="card in myCards"
+              :key="card.accountNumber"
+              class="acct-chip"
+              :class="{ active: card.accountNumber === accountNumber }"
+              @click="switchCard(card.accountNumber)"
             >
-              <el-table-column prop="ticketNo" label="工单号" width="150" />
-              <el-table-column prop="categoryText" label="类型" width="80" />
-              <el-table-column prop="title" label="标题" min-width="140" show-overflow-tooltip />
-              <el-table-column prop="accountNumber" label="账户" width="130" />
-              <el-table-column prop="userName" label="用户名" width="85" />
-              <el-table-column prop="statusText" label="状态" width="80">
-                <template #default="{ row }">
-                  <el-tag :type="statusType(row.status)" size="small">{{ row.statusText }}</el-tag>
-                </template>
-              </el-table-column>
-              <el-table-column label="情绪" width="80">
-                <template #default="{ row }">
-                  <el-tag :type="sentimentType(row.sentiment)" size="small">{{ row.sentiment || '--' }}</el-tag>
-                </template>
-              </el-table-column>
-              <el-table-column label="有效" width="70">
-                <template #default="{ row }">
-                  <el-tag :type="row.aiValid === 0 ? 'info' : 'success'" size="small" effect="plain">
-                    {{ row.aiValid === 0 ? '无效' : '有效' }}
-                  </el-tag>
-                </template>
-              </el-table-column>
-              <el-table-column label="AI评估" width="180">
-                <template #default="{ row }">
-                  <el-tooltip :content="row.aiEval || '--'" placement="top">
-                    <span class="ai-eval">
-                      <b :style="{ color: scoreColor(row.aiScore) }">{{ row.aiScore ?? '--' }}分</b>
-                      {{ (row.aiEval || '--') }}
-                    </span>
-                  </el-tooltip>
-                </template>
-              </el-table-column>
-              <el-table-column prop="handlerName" label="处理人" width="85" />
-              <el-table-column label="创建时间" width="150">
-                <template #default="{ row }">{{ formatTime(row.creationDate) }}</template>
-              </el-table-column>
-              <el-table-column label="操作" width="150" fixed="right">
-                <template #default="{ row }">
-                  <template v-if="row.aiValid !== 0">
-                    <el-button v-if="row.status === 0" size="small" type="primary" @click="handleAccept(row)">受理</el-button>
-                    <el-button v-if="row.status !== 3" size="small" type="success" @click="openReply(row)">回复</el-button>
-                  </template>
-                  <el-button v-if="row.status !== 3" size="small" @click="handleClose(row)">关闭</el-button>
-                </template>
-              </el-table-column>
-            </el-table>
+              <el-icon :size="13"><CreditCard /></el-icon>
+              <span class="chip-num vault-num">{{ card.accountNumber }}</span>
+            </div>
+          </div>
+          <div class="hero-quick">
+            <button class="q-btn q-primary" @click="showDeposit = true">
+              <el-icon :size="16"><Coin /></el-icon><span>存款</span>
+            </button>
+            <button class="q-btn" @click="showWithdraw = true">
+              <el-icon :size="16"><Wallet /></el-icon><span>取款</span>
+            </button>
+            <button class="q-btn" @click="showTransfer = true">
+              <el-icon :size="16"><Right /></el-icon><span>转账</span>
+            </button>
+          </div>
+        </div>
 
-            <el-empty v-if="!loading && filteredTickets.length === 0" description="暂无工单" />
-          </el-card>
-        </template>
+        <div class="hero-balance">
+          <div class="balance-caption">账户总资产 · 人民币</div>
+          <div class="balance-main">
+            <span class="cur">¥</span>
+            <span class="num vault-num">{{ balance }}</span>
+          </div>
+          <div class="balance-rule"></div>
+        </div>
 
-        <!-- 身份库管理 -->
-        <template v-else-if="activeMenu === 'idcard'">
-          <el-card class="idcard-card">
-            <template #header>
-              <div class="card-header">
-                <span>身份库录入</span>
-                <span class="idcard-tip">身份证号 + 姓名 + 人脸照片建档，用户实名认证时将与此库比对</span>
-              </div>
-            </template>
-            <el-form :model="idCardForm" label-width="90px" class="idcard-form">
-              <el-form-item label="身份证号">
-                <el-input v-model="idCardForm.idCard" placeholder="18位身份证号" maxlength="18" clearable style="width:260px" />
-              </el-form-item>
-              <el-form-item label="姓名">
-                <el-input v-model="idCardForm.name" placeholder="真实姓名" maxlength="20" clearable style="width:260px" />
-              </el-form-item>
-              <el-form-item label="人脸照片">
-                <div class="idcard-upload-row">
-                  <el-upload
-                    accept="image/*"
-                    :auto-upload="false"
-                    :show-file-list="false"
-                    :on-change="onIdCardImage"
-                  >
-                    <el-button :type="idCardImage ? 'success' : 'primary'">
-                      {{ idCardImage ? '已选择照片' : '选择照片' }}
-                    </el-button>
-                  </el-upload>
-                  <el-image v-if="idCardPreview" :src="idCardPreview" fit="cover" class="idcard-preview" />
-                </div>
-              </el-form-item>
-              <el-form-item>
-                <el-button type="warning" :loading="enrolling" @click="handleEnroll">录入身份库</el-button>
-                <el-button @click="resetIdCardForm">重置</el-button>
-              </el-form-item>
-            </el-form>
-          </el-card>
+        <div class="hero-meta">
+          <div class="meta-item">
+            <span class="meta-label">户主姓名</span>
+            <span class="meta-value">{{ accountInfo?.accountHolderName || '--' }}</span>
+          </div>
+          <div class="meta-divider"></div>
+          <div class="meta-item">
+            <span class="meta-label">账户类型</span>
+            <span class="meta-value">{{ accountInfo?.accountType || '--' }}</span>
+          </div>
+          <div class="meta-divider"></div>
+          <div class="meta-item">
+            <span class="meta-label">账户状态</span>
+            <span class="meta-value" :class="accountInfo?.accountStatus === 1 ? 'ok' : 'bad'">
+              <span class="status-dot"></span>
+              {{ accountInfo?.accountStatus === 1 ? '正常' : '冻结' }}
+            </span>
+          </div>
+          <div class="meta-divider"></div>
+          <div class="meta-item">
+            <span class="meta-label">实名证件</span>
+            <span class="meta-value vault-num">{{ maskIdCard(accountInfo?.userIdCard) }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
 
-          <el-card class="idcard-card">
-            <template #header>
-              <div class="card-header">
-                <span>身份库记录（{{ idCards.length }}）</span>
-                <el-button size="small" @click="loadIdCards">刷新</el-button>
-              </div>
-            </template>
-            <el-table :data="idCards" v-loading="idLoading" stripe style="width:100%">
-              <el-table-column prop="id" label="ID" width="80" />
-              <el-table-column label="身份证号" width="240">
-                <template #default="{ row }">{{ maskId(row.idCard) }}</template>
-              </el-table-column>
-              <el-table-column prop="name" label="姓名" width="140" />
-              <el-table-column label="录入时间" min-width="180">
-                <template #default="{ row }">{{ formatTime(row.creationDate) }}</template>
-              </el-table-column>
-            </el-table>
-            <el-empty v-if="!idLoading && idCards.length === 0" description="身份库暂无记录" />
-          </el-card>
-        </template>
+    <!-- ============ 快捷服务 · 大功能卡区 ============ -->
+    <main class="content">
+      <section class="services">
+        <div class="section-head">
+          <div class="section-title">
+            <h2>快捷服务</h2>
+            <span class="section-en">QUICK SERVICES</span>
+          </div>
+          <span class="section-sub">一键触达核心业务，资金管理从容有序</span>
+        </div>
+
+        <div class="service-grid">
+          <div class="service-card" @click="showDeposit = true">
+            <div class="s-icon gold"><el-icon :size="24"><Coin /></el-icon></div>
+            <div class="s-name">存款</div>
+            <div class="s-desc">灵活存入，财富沉淀</div>
+            <div class="s-go"><el-icon :size="14"><Right /></el-icon></div>
+          </div>
+          <div class="service-card" @click="showWithdraw = true">
+            <div class="s-icon blue"><el-icon :size="24"><Wallet /></el-icon></div>
+            <div class="s-name">取款</div>
+            <div class="s-desc">安全支取，随需而动</div>
+            <div class="s-go"><el-icon :size="14"><Right /></el-icon></div>
+          </div>
+          <div class="service-card" @click="showTransfer = true">
+            <div class="s-icon cyan"><el-icon :size="24"><Right /></el-icon></div>
+            <div class="s-name">转账</div>
+            <div class="s-desc">实时划转，直达至亲</div>
+            <div class="s-go"><el-icon :size="14"><Right /></el-icon></div>
+          </div>
+          <div class="service-card" @click="showRecords = true">
+            <div class="s-icon violet"><el-icon :size="24"><Document /></el-icon></div>
+            <div class="s-name">交易明细</div>
+            <div class="s-desc">收支流水，一目了然</div>
+            <div class="s-go"><el-icon :size="14"><Right /></el-icon></div>
+          </div>
+          <div class="service-card" @click="showProducts = true">
+            <div class="s-icon blue"><el-icon :size="24"><Coin /></el-icon></div>
+            <div class="s-name">理财产品</div>
+            <div class="s-desc">多元配置，稳健增值</div>
+            <div class="s-go"><el-icon :size="14"><Right /></el-icon></div>
+          </div>
+          <div class="service-card" @click="showHoldings = true">
+            <div class="s-icon gold"><el-icon :size="24"><DataAnalysis /></el-icon></div>
+            <div class="s-name">我的持仓</div>
+            <div class="s-desc">资产全景，了如指掌</div>
+            <div class="s-go"><el-icon :size="14"><Right /></el-icon></div>
+          </div>
+          <div class="service-card" @click="showMarket = true">
+            <div class="s-icon rose"><el-icon :size="24"><TrendCharts /></el-icon></div>
+            <div class="s-name">股票行情</div>
+            <div class="s-desc">实时盯盘，洞察先机</div>
+            <div class="s-go"><el-icon :size="14"><Right /></el-icon></div>
+          </div>
+          <div class="service-card" @click="showTrading = true">
+            <div class="s-icon amber"><el-icon :size="24"><Odometer /></el-icon></div>
+            <div class="s-name">股票交易</div>
+            <div class="s-desc">委托下单，一键成交</div>
+            <div class="s-go"><el-icon :size="14"><Right /></el-icon></div>
+          </div>
+        </div>
       </section>
+
+      <footer class="page-foot">
+        <span class="foot-brand">钱钱银行 · SMART BANKING</span>
+        <span class="foot-slogan">稳健笃行 · 财富永续</span>
+      </footer>
     </main>
 
-    <el-dialog v-model="detailVisible" title="工单详情" width="520px" destroy-on-close>
-      <div v-if="current" class="ticket-detail">
-        <div class="detail-item"><label>标题：</label>{{ current.title }}</div>
-        <div class="detail-item"><label>类型：</label>{{ current.categoryText }}</div>
-        <div class="detail-item"><label>账户：</label>{{ current.accountNumber }}</div>
-        <div class="detail-item"><label>用户名：</label>{{ current.userName }}（{{ current.userPhone }}）</div>
-        <div class="detail-item"><label>描述：</label>{{ current.description }}</div>
-        <div v-if="current.aiEval" class="detail-item reply">
-          <label>AI评估：</label>【{{ current.sentiment || '--' }} · {{ current.aiScore ?? '--' }}分 · {{ current.aiValid === 0 ? '无效' : '有效' }}】{{ current.aiEval }}
+    <el-dialog v-model="showDeposit" title="存款" width="500px" destroy-on-close>
+      <Deposit :account-number="accountNumber" @close="showDeposit = false" @refresh="loadBalance" />
+    </el-dialog>
+    <el-dialog v-model="showWithdraw" title="取款" width="500px" destroy-on-close>
+      <Withdraw :account-number="accountNumber" @close="showWithdraw = false" @refresh="loadBalance" />
+    </el-dialog>
+    <el-dialog v-model="showTransfer" title="转账" width="500px" destroy-on-close>
+      <Transfer :account-number="accountNumber" @close="showTransfer = false" @refresh="loadBalance" />
+    </el-dialog>
+    <el-dialog v-model="showRecords" title="交易明细" width="900px" destroy-on-close>
+      <TradeRecords :account-number="accountNumber" />
+    </el-dialog>
+    <el-dialog v-model="showProducts" title="理财产品" width="800px" destroy-on-close>
+      <ProductList :account-number="accountNumber" @refresh-balance="loadBalance" />
+    </el-dialog>
+    <el-dialog v-model="showHoldings" title="我的持仓" width="800px" destroy-on-close>
+      <MyHoldings :account-number="accountNumber" @refresh-balance="loadBalance" />
+    </el-dialog>
+    <el-dialog v-model="showMarket" title="股票行情" width="980px" destroy-on-close>
+      <StockMarket />
+    </el-dialog>
+    <el-dialog v-model="showTrading" title="股票交易" width="980px" destroy-on-close @closed="loadBalance">
+      <StockTrading :account-number="accountNumber" @refresh-balance="loadBalance" />
+    </el-dialog>
+    <el-dialog v-model="showProfile" title="个人信息" width="480px" destroy-on-close>
+      <ProfileSettings @close="showProfile = false" />
+    </el-dialog>
+    <el-dialog v-model="showChangePwd" title="修改密码" width="480px" destroy-on-close>
+      <ChangePassword @close="showChangePwd = false" />
+    </el-dialog>
+    <el-dialog v-model="showCardList" title="切换银行卡" width="420px" destroy-on-close>
+      <div class="card-list">
+        <div
+          v-for="card in myCards"
+          :key="card.accountNumber"
+          class="card-item"
+          :class="{ active: card.accountNumber === accountNumber }"
+          @click="switchCard(card.accountNumber)"
+        >
+          <div class="card-item-left">
+            <el-icon :size="20" color="#d4b06a"><CreditCard /></el-icon>
+            <div>
+              <div class="card-item-number vault-num">{{ card.accountNumber }}</div>
+              <div class="card-item-name">{{ card.accountHolderName }}</div>
+            </div>
+          </div>
+          <el-tag v-if="card.accountNumber === accountNumber" size="small" type="warning">当前</el-tag>
         </div>
-        <div v-if="current.reply" class="detail-item reply"><label>客服回复：</label>{{ current.reply }}</div>
       </div>
     </el-dialog>
 
-    <el-dialog v-model="replyVisible" title="回复工单" width="480px" destroy-on-close>
-      <el-input v-model="replyContent" type="textarea" :rows="4" placeholder="请输入回复内容" maxlength="1000" show-word-limit />
-      <template #footer>
-        <el-button @click="replyVisible = false">取消</el-button>
-        <el-button type="primary" :loading="replying" @click="handleReply">确认回复</el-button>
-      </template>
-    </el-dialog>
+    <ChatBot />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { getAllTickets, acceptTicket, replyTicket, closeTicket, enrollIdCard, getIdCardList } from '@/api/support'
+import { ref, onMounted, onUnmounted, provide } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import request from '@/utils/request'
+import { getUserAccounts } from '@/api/user'
+import Deposit from '@/components/Deposit.vue'
+import Withdraw from '@/components/Withdraw.vue'
+import Transfer from '@/components/Transfer.vue'
+import TradeRecords from '@/components/TradeRecords.vue'
+import ProductList from '@/components/ProductList.vue'
+import MyHoldings from '@/components/MyHoldings.vue'
+import StockMarket from '@/components/StockMarket.vue'
+import StockTrading from '@/components/StockTrading.vue'
+import ChangePassword from '@/components/ChangePassword.vue'
+import ProfileSettings from '@/components/ProfileSettings.vue'
+import ChatBot from '@/components/ChatBot.vue'
+import { ArrowDown, SwitchButton, Clock, Key, User, CreditCard, ArrowLeft, Wallet, Coin, Right, Document, DataAnalysis, TrendCharts, Odometer } from '@element-plus/icons-vue'
 
+const route = useRoute()
 const router = useRouter()
-const staffName = ref(localStorage.getItem('staffName') || '客服')
-const activeMenu = ref('overview')
-const activeStatus = ref('all')
-const tickets = ref([])
-const loading = ref(false)
-const current = ref(null)
-const detailVisible = ref(false)
-const replyVisible = ref(false)
-const replying = ref(false)
-const replyContent = ref('')
-const idCardForm = ref({ idCard: '', name: '' })
-const idCardImage = ref('')
-const idCardPreview = ref('')
-const idCards = ref([])
-const idLoading = ref(false)
-const enrolling = ref(false)
+const accountNumber = route.params.accountNumber
 
-const headerTitle = computed(() => {
-  if (activeMenu.value === 'overview') return '数据概览'
-  if (activeMenu.value === 'idcard') return '身份库管理'
-  return '工单管理'
-})
+const accountInfo = ref(null)
+const balance = ref('0.00')
+const currentTime = ref('')
+const myCards = ref([])
 
-const statusTextMap = { all: '全部', 0: '待处理', 1: '处理中', 2: '已回复', 3: '已关闭', invalid: '无效/恶意' }
-const statusText = (s) => statusTextMap[s] || s
+const showDeposit = ref(false)
+const showWithdraw = ref(false)
+const showTransfer = ref(false)
+const showRecords = ref(false)
+const showProducts = ref(false)
+const showHoldings = ref(false)
+const showMarket = ref(false)
+const showTrading = ref(false)
+const showProfile = ref(false)
+const showChangePwd = ref(false)
+const showCardList = ref(false)
+let timer = null
 
-const filteredTickets = computed(() => {
-  if (activeStatus.value === 'invalid') return tickets.value.filter((t) => Number(t.aiValid) === 0)
-  if (activeStatus.value === 'all') return tickets.value
-  const st = Number(activeStatus.value)
-  return tickets.value.filter((t) => Number(t.status) === st && Number(t.aiValid) === 1)
-})
-
-const stats = computed(() => {
-  const s = { total: tickets.value.length, pending: 0, processing: 0, replied: 0, closed: 0, invalid: 0 }
-  tickets.value.forEach((t) => {
-    const st = Number(t.status)
-    if (Number(t.aiValid) === 0) s.invalid++
-    else if (st === 0) s.pending++
-    else if (st === 1) s.processing++
-    else if (st === 2) s.replied++
-    else if (st === 3) s.closed++
-  })
-  return s
-})
-
-const pendingList = computed(() =>
-  tickets.value.filter((t) => Number(t.status) === 0 && Number(t.aiValid) === 1)
-)
-
-const statusType = (s) => {
-  if (s === 0) return 'danger'
-  if (s === 1) return 'warning'
-  if (s === 2) return 'success'
-  return 'info'
-}
-
-const sentimentType = (s) => {
-  if (s === '积极') return 'success'
-  if (s === '消极') return 'warning'
-  if (s === '恶意') return 'danger'
-  return 'info'
-}
-
-const scoreColor = (score) => {
-  if (score == null) return 'var(--vault-text-3)'
-  if (score >= 60) return 'var(--vault-up)'
-  if (score >= 40) return 'var(--vault-gold)'
-  return 'var(--vault-down)'
-}
-
-const rowClass = ({ row }) => (Number(row.aiValid) === 0 ? 'invalid-row' : '')
-
-const formatTime = (t) => {
-  if (!t) return '--'
-  return String(t).replace('T', ' ').substring(0, 16)
-}
-
-const onMenuSelect = (index) => {
-  activeMenu.value = index
-  if (index === 'idcard') loadIdCards()
-}
-
-const goTickets = () => {
-  activeMenu.value = 'tickets'
-  activeStatus.value = '0'
-}
-
-const loadAll = async () => {
-  loading.value = true
-  try {
-    const res = await getAllTickets()
-    tickets.value = res.data || []
-  } catch (e) {
-    console.error(e)
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleAccept = async (row) => {
-  try {
-    await acceptTicket(row.id)
-    ElMessage.success('已受理')
-    loadAll()
-  } catch (e) {
-    console.error(e)
-  }
-}
-
-const openReply = (row) => {
-  current.value = row
-  replyContent.value = row.reply || ''
-  replyVisible.value = true
-}
-
-const handleReply = async () => {
-  if (!replyContent.value.trim()) {
-    ElMessage.warning('请输入回复内容')
-    return
-  }
-  replying.value = true
-  try {
-    await replyTicket({ ticketId: current.value.id, reply: replyContent.value })
-    ElMessage.success('回复成功')
-    replyVisible.value = false
-    loadAll()
-  } catch (e) {
-    console.error(e)
-  } finally {
-    replying.value = false
-  }
-}
-
-const handleClose = async (row) => {
-  try {
-    await ElMessageBox.confirm('确认关闭该工单？', '提示', { type: 'warning' })
-    await closeTicket(row.id)
-    ElMessage.success('工单已关闭')
-    loadAll()
-  } catch (e) {
-    if (e !== 'cancel' && e !== 'close') console.error(e)
-  }
-}
-
-const logout = async () => {
-  try {
-    await ElMessageBox.confirm('确认退出客服后台？', '提示', { type: 'warning' })
-    localStorage.removeItem('staff_token')
-    localStorage.removeItem('staffName')
-    router.push('/support/login')
-  } catch (e) {
-    if (e !== 'cancel' && e !== 'close') console.error(e)
-  }
-}
-
-const maskId = (id) => {
+const maskIdCard = (id) => {
   if (!id || id.length < 10) return id || '--'
-  return id.substring(0, 6) + '********' + id.substring(id.length - 4)
+  return id.substring(0, 6) + '********' + id.substring(14)
 }
 
-const onIdCardImage = (file) => {
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    idCardImage.value = e.target.result.split(',')[1]
-    idCardPreview.value = e.target.result
-  }
-  reader.readAsDataURL(file.raw)
-}
-
-const resetIdCardForm = () => {
-  idCardForm.value = { idCard: '', name: '' }
-  idCardImage.value = ''
-  idCardPreview.value = ''
-}
-
-const handleEnroll = async () => {
-  const f = idCardForm.value
-  if (!/^\d{17}[\dXx]$/.test(f.idCard)) {
-    ElMessage.warning('请输入正确的18位身份证号')
-    return
-  }
-  if (!f.name.trim()) {
-    ElMessage.warning('请输入姓名')
-    return
-  }
-  if (!idCardImage.value) {
-    ElMessage.warning('请选择人脸照片')
-    return
-  }
-  enrolling.value = true
+const loadBalance = async () => {
   try {
-    await enrollIdCard({ idCard: f.idCard, name: f.name, image: idCardImage.value })
-    ElMessage.success('身份库录入成功')
-    resetIdCardForm()
-    loadIdCards()
-  } catch (e) {
-    console.error(e)
-  } finally {
-    enrolling.value = false
-  }
+    const [infoRes, balRes] = await Promise.all([
+      request({ url: '/account/getAccountEntity', method: 'post', params: { accountNumber } }),
+      request({ url: '/account/getAccountBalance', method: 'get', params: { accountNumber } })
+    ])
+    accountInfo.value = infoRes.data
+    const val = balRes.data
+    balance.value = typeof val === 'number' ? val.toFixed(2) : '0.00'
+  } catch (e) { console.error(e) }
 }
 
-const loadIdCards = async () => {
-  idLoading.value = true
+const loadMyCards = async () => {
   try {
-    const res = await getIdCardList()
-    idCards.value = res.data || []
-  } catch (e) {
-    console.error(e)
-  } finally {
-    idLoading.value = false
-  }
+    const res = await getUserAccounts()
+    myCards.value = res.data || []
+  } catch (e) { console.error(e) }
 }
 
-onMounted(loadAll)
+provide('refreshBalance', loadBalance)
+
+const handleMenuSelect = (index) => {
+  if (index === 'records') showRecords.value = true
+  if (index === 'products') showProducts.value = true
+  if (index === 'holdings') showHoldings.value = true
+  if (index === 'market') showMarket.value = true
+  if (index === 'trading') showTrading.value = true
+}
+
+const switchCard = (cardNumber) => {
+  showCardList.value = false
+  const card = myCards.value.find(c => c.accountNumber === cardNumber)
+  if (card) {
+    localStorage.setItem('userInfo', JSON.stringify(card))
+  }
+  router.push('/dashboard')
+}
+
+const updateTime = () => {
+  const now = new Date()
+  currentTime.value = now.toLocaleString('zh-CN', { hour12: false })
+}
+
+const goBack = () => {
+  router.push('/user/dashboard')
+}
+
+const logout = () => {
+  localStorage.removeItem('token')
+  localStorage.removeItem('userInfo')
+  ElMessage.success('已安全退出')
+  router.push('/user/login')
+}
+
+onMounted(async () => {
+  updateTime()
+  timer = setInterval(updateTime, 1000)
+  await Promise.all([loadBalance(), loadMyCards()])
+})
+onUnmounted(() => { clearInterval(timer) })
 </script>
 
 <style scoped>
-.support-layout { display: flex; min-height: 100vh; background: var(--vault-bg); }
-.support-aside {
-  width: 220px; flex-shrink: 0;
-  background: var(--vault-graphite);
-  border-right: 1px solid var(--vault-line);
-  display: flex; flex-direction: column;
+.support-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background);
+  font-family: var(--font-sans);
 }
-.aside-brand {
-  display: flex; align-items: center; gap: 12px;
-  padding: 22px 20px 18px;
-  border-bottom: 1px solid var(--vault-line);
+
+/* ============ 顶栏 ============ */
+.top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  padding: 0 var(--space-8);
+  background: rgba(20, 27, 45, 0.9);
+  backdrop-filter: blur(var(--glass-blur));
+  border-bottom: 1px solid var(--glass-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
-.brand-icon {
-  width: 42px; height: 42px; border-radius: 12px;
+
+.nav-left { display: flex; align-items: center; gap: var(--space-4); }
+
+.back-btn {
+  width: 36px; height: 36px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 22px; font-weight: 800;
-  color: #231a08;
-  background: linear-gradient(135deg, #e6c98a, #b08d4a);
-  box-shadow: 0 0 18px var(--vault-accent-glow);
+  border-radius: var(--radius-md);
+  color: var(--color-muted-foreground);
+  background: var(--color-muted);
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
+  transition: all var(--transition-normal);
 }
-.brand-title { font-size: 17px; font-weight: 700; color: var(--vault-text); letter-spacing: 1px; }
-.brand-sub { font-size: 11px; color: var(--vault-text-3); letter-spacing: 3px; margin-top: 2px; }
-.aside-menu { border-right: none; flex: 1; padding-top: 10px; background: transparent; }
-.aside-menu :deep(.el-menu-item) { height: 50px; }
-.aside-menu :deep(.el-menu-item.is-active) { background: rgba(212,176,106,0.1); }
-.aside-menu :deep(.el-menu-item:hover) { background: rgba(212,176,106,0.06); }
-.aside-footer { padding: 16px 20px; font-size: 11px; color: var(--vault-text-dim); letter-spacing: 1px; }
-.support-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-.support-header {
-  height: 60px; flex-shrink: 0;
+
+.back-btn:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background: rgba(245, 158, 11, 0.06);
+}
+
+.brand { display: flex; align-items: center; gap: var(--space-3); }
+
+.brand-emblem {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 800;
+  color: var(--color-on-primary);
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  box-shadow: var(--shadow-glow-primary);
+}
+
+.brand-text { display: flex; flex-direction: column; line-height: 1.2; }
+
+.brand-name { font-size: 16px; font-weight: 700; color: var(--color-foreground); }
+
+.brand-en { font-size: 9px; color: var(--color-accent); letter-spacing: 0.3em; font-weight: 600; }
+
+.nav-center { display: flex; align-items: center; gap: var(--space-1); }
+
+.nav-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--color-muted-foreground);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  font-weight: 500;
+}
+
+.nav-item:hover { color: var(--color-primary); background: rgba(245, 158, 11, 0.06); }
+
+.nav-right { display: flex; align-items: center; gap: var(--space-5); }
+
+.server-status { display: flex; align-items: center; gap: 6px; }
+
+.vault-status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--color-success);
+  box-shadow: 0 0 6px var(--color-success);
+}
+
+.server-text { font-size: 12px; color: var(--color-muted-foreground); font-weight: 500; }
+
+.header-time { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--color-muted-foreground); font-weight: 500; }
+
+.user-trigger { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 6px 10px; border-radius: var(--radius-md); transition: all var(--transition-normal); }
+
+.user-trigger:hover { background: var(--color-muted); }
+
+.user-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-primary) 100%);
+  color: var(--color-foreground);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700;
+  box-shadow: var(--shadow-glow-accent);
+}
+
+.user-name { font-size: 14px; font-weight: 600; color: var(--color-foreground); }
+
+/* ============ 巨幅资产面板 ============ */
+.hero {
+  position: relative;
+  padding: var(--space-10) var(--space-16) var(--space-8);
+  margin: var(--space-7) var(--space-8) 0;
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--color-card) 0%, rgba(20, 27, 45, 0.8) 100%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg);
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 80% 20%, rgba(245, 158, 11, 0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-glow {
+  position: absolute;
+  top: -50%; right: -10%;
+  width: 500px; height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245,158,11,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-inner { position: relative; z-index: 2; }
+
+.hero-top { display: flex; justify-content: space-between; align-items: center; gap: var(--space-6); }
+
+.account-chips { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+
+.acct-chip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--glass-border);
+  color: var(--color-muted-foreground);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  background: var(--color-muted);
+}
+
+.acct-chip .el-icon { color: var(--color-accent); }
+
+.acct-chip:hover { color: var(--color-foreground); border-color: var(--color-border-hover); }
+
+.acct-chip.active {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background: rgba(245,158,11,0.08);
+  box-shadow: var(--shadow-glow-primary);
+}
+
+.chip-num { font-family: var(--font-mono); letter-spacing: 0.06em; }
+
+.hero-quick { display: flex; align-items: center; gap: var(--space-3); }
+
+.q-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 20px;
+  font-size: 13px; font-weight: 600;
+  color: var(--color-muted-foreground);
+  background: var(--color-muted);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  font-family: var(--font-sans);
+}
+
+.q-btn:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.q-btn.q-primary {
+  color: var(--color-on-primary);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  border: none;
+  box-shadow: var(--shadow-glow-primary);
+}
+
+.q-btn.q-primary:hover {
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.3);
+  transform: translateY(-1px);
+}
+
+.hero-balance { margin: var(--space-10) 0 var(--space-8); }
+
+.balance-caption {
+  font-size: 12px;
+  color: var(--color-muted-foreground);
+  letter-spacing: 0.2em;
+  margin-bottom: var(--space-3);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.balance-main { display: flex; align-items: baseline; gap: var(--space-3); }
+
+.balance-main .cur { font-size: 32px; color: var(--color-primary); font-weight: 600; }
+
+.balance-main .num {
+  font-family: var(--font-mono);
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-foreground);
+  letter-spacing: 0.02em;
+}
+
+.balance-rule {
+  margin-top: var(--space-6);
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, var(--color-border) 0%, transparent 100%);
+}
+
+.hero-meta { display: flex; align-items: center; flex-wrap: wrap; }
+
+.meta-item { display: flex; flex-direction: column; gap: 4px; padding: 0 var(--space-9); }
+
+.meta-item:first-child { padding-left: 0; }
+
+.meta-label { font-size: 11px; color: var(--color-muted-foreground); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; }
+
+.meta-value { font-size: 14px; color: var(--color-foreground); font-weight: 500; }
+
+.meta-value.ok { color: var(--color-success); display: flex; align-items: center; gap: 6px; }
+
+.meta-value.bad { color: var(--color-destructive); display: flex; align-items: center; gap: 6px; }
+
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+.meta-divider { width: 1px; height: 32px; background: var(--color-border); }
+
+/* ============ 内容区 ============ */
+.content { flex: 1; padding: var(--space-9) var(--space-8) var(--space-6); }
+
+.services {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, var(--color-card) 0%, rgba(20, 27, 45, 0.6) 100%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-9) var(--space-9);
+  box-shadow: var(--shadow-md);
+}
+
+.section-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--space-7); }
+
+.section-title { display: flex; flex-direction: column; gap: 4px; }
+
+.section-title h2 {
+  font-size: 24px; font-weight: 700; color: var(--color-foreground); margin: 0;
+}
+
+.section-title h2::after {
+  content: '';
+  display: block;
+  margin-top: var(--space-3);
+  width: 40px; height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+}
+
+.section-en { font-size: 10px; color: var(--color-accent); letter-spacing: 0.35em; font-weight: 600; margin-top: 4px; }
+
+.section-sub { font-size: 13px; color: var(--color-muted-foreground); }
+
+.service-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-5);
+}
+
+.service-card {
+  position: relative;
+  padding: var(--space-8) var(--space-7) var(--space-6);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  background: var(--color-muted);
+  cursor: pointer;
+  transition: all var(--transition-slow);
+  overflow: hidden;
+}
+
+.service-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-primary);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(245,158,11,0.15);
+  background: var(--color-card);
+}
+
+.s-icon {
+  width: 48px; height: 48px;
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: var(--space-4);
+}
+
+.s-icon.gold { color: var(--color-primary); background: rgba(245,158,11,0.1); }
+.s-icon.blue { color: #60A5FA; background: rgba(96,165,250,0.1); }
+.s-icon.cyan { color: #2DD4BF; background: rgba(45,212,191,0.1); }
+.s-icon.violet { color: var(--color-accent); background: rgba(139,92,246,0.1); }
+.s-icon.rose { color: #FB7185; background: rgba(251,113,133,0.1); }
+.s-icon.amber { color: var(--color-secondary); background: rgba(251,191,36,0.1); }
+
+.s-name { font-size: 16px; font-weight: 600; color: var(--color-foreground); margin-bottom: 4px; }
+.s-desc { font-size: 12px; color: var(--color-muted-foreground); }
+
+.s-go {
+  position: absolute;
+  top: var(--space-6); right: var(--space-6);
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  color: var(--color-muted-foreground);
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition-normal);
+}
+
+.service-card:hover .s-go {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  transform: translateX(2px);
+}
+
+.page-foot {
+  max-width: 1200px;
+  margin: var(--space-8) auto 0;
+  padding: 0 var(--space-2);
   display: flex; justify-content: space-between; align-items: center;
-  padding: 0 24px;
-  background: rgba(13,20,32,0.9);
-  border-bottom: 1px solid var(--vault-line);
-  backdrop-filter: blur(8px);
+  color: var(--color-muted-foreground);
+  font-size: 12px;
+  opacity: 0.7;
 }
-.header-title { font-size: 17px; font-weight: 700; color: var(--vault-text); letter-spacing: 0.08em; }
-.header-right { display: flex; align-items: center; gap: 16px; }
-.server-status { display: flex; align-items: center; gap: 8px; }
-.server-text { font-size: 12px; color: var(--vault-text-3); letter-spacing: 0.05em; }
-.staff-info { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--vault-text-2); }
-.support-content { flex: 1; padding: 20px 24px; overflow: auto; }
-.stat-row { display: flex; gap: 16px; margin-bottom: 16px; }
-.stat-card { flex: 1; text-align: center; padding: 8px 0; border: 1px solid var(--vault-line); background: linear-gradient(180deg, var(--vault-panel-2), var(--vault-panel)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 12px 32px rgba(0,0,0,0.25); }
-.invalid-card { opacity: 0.85; }
-.stat-num { font-size: 34px; font-weight: 700; }
-.stat-label { font-size: 13px; color: var(--vault-text-3); margin-top: 6px; }
-.card-header { display: flex; justify-content: space-between; align-items: center; color: var(--vault-text); }
-.todo-card { margin-bottom: 16px; border-color: var(--vault-line); }
-.ticket-card :deep(.el-tabs__item) { font-weight: 500; }
-.ticket-card :deep(.el-table .invalid-row) { color: var(--vault-text-3); }
-.ticket-card :deep(.el-table .invalid-row:hover > td) { background: var(--vault-panel); }
-.ai-eval {
-  display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  font-size: 12px; color: var(--vault-text-2);
+
+.foot-slogan { color: var(--color-primary); letter-spacing: 0.2em; }
+
+/* ============ 切卡列表 ============ */
+.card-list { display: flex; flex-direction: column; gap: var(--space-2); }
+.card-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border: 1px solid var(--glass-border);
+  background: var(--color-muted);
 }
-.ticket-detail { display: flex; flex-direction: column; gap: 10px; font-size: 14px; color: var(--vault-text); }
-.detail-item label { color: var(--vault-text-3); margin-right: 6px; }
-.detail-item.reply { background: rgba(212,176,106,0.06); border: 1px solid var(--vault-line); padding: 10px 12px; border-radius: 8px; }
-.idcard-card { margin-bottom: 16px; border-color: var(--vault-line); }
-.idcard-tip { font-size: 12px; color: var(--vault-text-3); }
-.idcard-form { max-width: 520px; padding-top: 6px; }
-.idcard-upload-row { display: flex; align-items: center; gap: 12px; }
-.idcard-preview { width: 64px; height: 64px; border-radius: 8px; border: 1px solid var(--vault-line); }
+.card-item:hover { background: var(--color-card); border-color: var(--color-border-hover); }
+.card-item.active { background: rgba(245,158,11,0.08); border-color: var(--color-primary); }
+.card-item-left { display: flex; align-items: center; gap: var(--space-3); }
+.card-item-number { font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--color-foreground); }
+.card-item-name { font-size: 12px; color: var(--color-muted-foreground); }
+
+/* ============ 响应式 ============ */
+@media (max-width: 1100px) {
+  .service-grid { grid-template-columns: repeat(3, 1fr); }
+  .nav-center { display: none; }
+}
+
+@media (max-width: 820px) {
+  .service-grid { grid-template-columns: repeat(2, 1fr); }
+  .hero { padding: var(--space-7) var(--space-6) var(--space-6); margin: var(--space-4) var(--space-4) 0; }
+  .hero-top { flex-direction: column; align-items: flex-start; }
+  .balance-main .num { font-size: 40px; }
+  .meta-item { padding: 0 var(--space-4); }
+  .server-text, .header-time { display: none; }
+}
+
+@media (max-width: 520px) {
+  .service-grid { grid-template-columns: 1fr; }
+  .hero-quick { width: 100%; }
+  .q-btn { flex: 1; justify-content: center; }
+  .brand-en { display: none; }
+  .content { padding: var(--space-4); }
+}
 </style>

@@ -33,12 +33,28 @@ public class SimulatedStockQuoteProvider implements StockQuoteProvider {
                 ? price.subtract(prevClose).multiply(BigDecimal.valueOf(100))
                         .divide(prevClose, 2, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
+        BigDecimal highPrice = price.max(prevClose);
+        BigDecimal lowPrice = price.min(prevClose);
+        long volume = (long)(ThreadLocalRandom.current().nextDouble( 10000, 1000000));
+        BigDecimal amount = price.multiply(BigDecimal.valueOf(volume)).setScale(2, RoundingMode.HALF_UP);
+
+        stock.setCurrentPrice(price);
+        stock.setHighPrice(highPrice);
+        stock.setLowPrice(lowPrice);
+        stock.setVolume(volume);
+        stock.setAmount(amount);
+        stock.setChangePercent(change);
+
         StockQuoteVO vo = new StockQuoteVO();
         vo.setStockCode(stock.getStockCode());
         vo.setStockName(stock.getStockName());
         vo.setCurrentPrice(price);
         vo.setPrevClose(prevClose);
         vo.setChangePercent(change);
+        vo.setHighPrice(highPrice);
+        vo.setLowPrice(lowPrice);
+        vo.setVolume(volume);
+        vo.setAmount(amount);
         vo.setQuoteTime(LocalDateTime.now());
         return vo;
     }

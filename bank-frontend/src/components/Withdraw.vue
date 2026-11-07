@@ -4,7 +4,7 @@
     <div v-if="step === 'input'" class="atm-step">
       <div class="atm-step-header">
         <div class="atm-icon">
-          <el-icon :size="28" color="var(--vault-gold)"><Wallet /></el-icon>
+          <el-icon :size="28" color="var(--color-primary)"><Wallet /></el-icon>
         </div>
         <div>
           <h3 class="atm-step-title">取款</h3>
@@ -47,7 +47,7 @@
     <div v-if="step === 'confirm'" class="atm-step">
       <div class="atm-step-header">
         <div class="atm-icon confirm-icon">
-          <el-icon :size="28" color="var(--vault-gold)"><Warning /></el-icon>
+          <el-icon :size="28" color="var(--color-primary)"><Warning /></el-icon>
         </div>
         <div>
           <h3 class="atm-step-title">确认取款信息</h3>
@@ -76,8 +76,8 @@
     <div v-if="step === 'result'" class="atm-step">
       <div class="result-display" :class="resultType">
         <div class="result-icon">
-          <el-icon :size="48" v-if="resultType === 'success'" color="var(--vault-up)"><CircleCheck /></el-icon>
-          <el-icon :size="48" v-else color="var(--vault-down)"><CircleClose /></el-icon>
+          <el-icon :size="48" v-if="resultType === 'success'" color="var(--color-success)"><CircleCheck /></el-icon>
+          <el-icon :size="48" v-else color="var(--color-destructive)"><CircleClose /></el-icon>
         </div>
         <h3 class="result-title">{{ resultType === 'success' ? '取款成功' : '取款失败' }}</h3>
         <p class="result-msg">{{ resultMsg }}</p>
@@ -150,7 +150,7 @@ const handlePasswordConfirm = async (pwd) => {
 
 const doWithdraw = async () => {
   try {
-    await withdraw({ accountNumber: form.accountNumber, amount: form.amount, password: password.value })
+    await withdraw({ accountNumber: form.accountNumber, amount: form.amount, password: password.value, requestId: crypto.randomUUID() })
     if (refreshBalance) refreshBalance()
     emit('refresh')
     tradeTime.value = new Date().toLocaleString('zh-CN', { hour12: false })
@@ -176,62 +176,268 @@ const closePanel = () => { resetForm(); emit('close') }
 </script>
 
 <style scoped>
-.atm-container { width: 100%; max-width: 480px; }
-.atm-step { animation: fadeIn 0.3s ease-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-.atm-step-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--vault-line); }
-.atm-icon {
-  width: 48px; height: 48px;
-  background: rgba(212,176,106,0.1);
-  border: 1px solid var(--vault-line);
-  border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
+.atm-container {
+  width: 100%;
+  max-width: 480px;
 }
-.confirm-icon { background: rgba(212,176,106,0.1); }
-.atm-step-title { margin: 0; font-size: 16px; font-weight: 600; color: var(--vault-text); }
-.atm-step-desc { margin: 2px 0 0; font-size: 12px; color: var(--vault-text-3); }
-.atm-form { max-width: 380px; }
-.form-row { margin-bottom: 20px; }
-.atm-label { display: block; font-size: 13px; font-weight: 600; color: var(--vault-text-2); margin-bottom: 6px; letter-spacing: 0.05em; }
+
+.atm-step {
+  animation: fadeIn var(--transition-slow) ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(var(--space-2)); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.atm-step-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.atm-icon {
+  width: var(--space-12);
+  height: var(--space-12);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--transition-normal);
+}
+
+.confirm-icon {
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
+.atm-step-title {
+  margin: 0;
+  font-size: var(--font-h3);
+  font-weight: 600;
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+}
+
+.atm-step-desc {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-base);
+  color: var(--color-muted-foreground);
+  font-family: var(--font-sans);
+}
+
+.atm-form {
+  max-width: 380px;
+}
+
+.form-row {
+  margin-bottom: var(--space-5);
+}
+
+.atm-label {
+  display: block;
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+  margin-bottom: var(--space-2);
+  letter-spacing: 0.05em;
+  font-family: var(--font-sans);
+}
+
 .atm-form :deep(.el-input__wrapper),
 .atm-form :deep(.el-input-number__increase),
-.atm-form :deep(.el-input-number__decrease) { height: 46px; border-radius: 10px !important; }
-.atm-form .full-width { width: 100%; }
-.atm-form :deep(.el-input-number .el-input__wrapper) { padding-right: 50px; }
+.atm-form :deep(.el-input-number__decrease) {
+  height: var(--space-12);
+  border-radius: var(--radius-lg) !important;
+  background: var(--color-card);
+  border: 1px solid var(--glass-border);
+  box-shadow: none;
+  transition: border-color var(--transition-normal);
+}
 
-.confirm-card { background: rgba(8,12,20,0.5); border: 1px solid var(--vault-line); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; }
-.confirm-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--vault-line); }
-.confirm-row:last-child { border-bottom: none; }
-.confirm-label { font-size: 14px; color: var(--vault-text-3); }
-.confirm-value { font-size: 15px; font-weight: 600; color: var(--vault-text); }
-.confirm-value.highlight { color: var(--vault-down); font-size: 18px; }
+.atm-form :deep(.el-input__wrapper:hover),
+.atm-form :deep(.el-input-number__increase:hover),
+.atm-form :deep(.el-input-number__decrease:hover) {
+  border-color: var(--color-border-hover);
+}
 
-.result-display { text-align: center; padding: 20px 0; }
-.result-icon { margin-bottom: 12px; }
-.result-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
-.result-display.success .result-title { color: var(--vault-up); }
-.result-display.error .result-title { color: var(--vault-down); }
-.result-msg { font-size: 14px; color: var(--vault-text-2); margin-bottom: 20px; }
-.result-details { background: rgba(8,12,20,0.5); border: 1px solid var(--vault-line); border-radius: 12px; padding: 16px 20px; text-align: left; max-width: 360px; margin: 0 auto; }
-.detail-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: var(--vault-text-2); }
-.detail-row .highlight { color: var(--vault-down); font-weight: 600; }
+.atm-form :deep(.el-input__wrapper:focus-within),
+.atm-form :deep(.el-input-number__increase:focus-within),
+.atm-form :deep(.el-input-number__decrease:focus-within) {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
 
-.atm-actions { display: flex; gap: 12px; margin-top: 24px; }
+.atm-form .full-width {
+  width: 100%;
+}
+
+.atm-form :deep(.el-input-number .el-input__wrapper) {
+  padding-right: 50px;
+}
+
+.atm-form :deep(.el-input__inner) {
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+}
+
+.atm-form :deep(.el-input__inner::placeholder) {
+  color: var(--color-muted-foreground);
+}
+
+.confirm-card {
+  background: var(--color-card);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-6);
+  box-shadow: var(--shadow-md);
+}
+
+.confirm-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.confirm-row:last-child {
+  border-bottom: none;
+}
+
+.confirm-label {
+  font-size: var(--font-base);
+  color: var(--color-muted-foreground);
+  font-family: var(--font-sans);
+}
+
+.confirm-value {
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--color-foreground);
+  font-family: var(--font-mono);
+}
+
+.confirm-value.highlight {
+  color: var(--color-primary);
+  font-size: var(--font-h3);
+}
+
+.result-display {
+  text-align: center;
+  padding: var(--space-5) 0;
+}
+
+.result-icon {
+  margin-bottom: var(--space-3);
+}
+
+.result-title {
+  font-size: var(--font-title);
+  font-weight: 700;
+  margin-bottom: var(--space-2);
+  font-family: var(--font-sans);
+}
+
+.result-display.success .result-title {
+  color: var(--color-success);
+}
+
+.result-display.error .result-title {
+  color: var(--color-destructive);
+}
+
+.result-msg {
+  font-size: var(--font-base);
+  color: var(--color-muted-foreground);
+  margin-bottom: var(--space-5);
+  font-family: var(--font-sans);
+}
+
+.result-details {
+  background: var(--color-card);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4) var(--space-5);
+  text-align: left;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+  font-size: var(--font-base);
+  color: var(--color-muted-foreground);
+  font-family: var(--font-sans);
+}
+
+.detail-row .highlight {
+  color: var(--color-primary);
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.atm-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
 .atm-btn-primary {
-  flex: 1; height: 46px;
-  background: linear-gradient(135deg, #b08d4a, #d4b06a);
-  border: none; color: #fff; font-size: 15px;
-  font-weight: 600; border-radius: 10px;
-  box-shadow: 0 0 18px rgba(212,176,106,0.2), inset 0 0 0 1px rgba(255,255,255,0.08);
+  flex: 1;
+  height: var(--space-12);
+  background: var(--color-primary);
+  border: none;
+  color: var(--color-on-primary);
+  font-size: var(--font-base);
+  font-weight: 600;
+  border-radius: var(--radius-lg);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-md);
 }
-.atm-btn-primary:hover { background: linear-gradient(135deg, #c9a458, #e6c98a); }
-.atm-btn-secondary {
-  flex: 1; height: 46px;
-  border: 1px solid var(--vault-line); background: rgba(212,176,106,0.04);
-  color: var(--vault-text-2); font-size: 15px; font-weight: 500; border-radius: 10px;
-}
-.atm-btn-secondary:hover { border-color: var(--vault-line-hover); color: var(--vault-text); }
 
-@media (max-width: 480px) { .atm-container { max-width: 100%; } }
+.atm-btn-primary:hover {
+  background: var(--color-secondary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
+.atm-btn-primary:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.atm-btn-secondary {
+  flex: 1;
+  height: var(--space-12);
+  border: 1px solid var(--glass-border);
+  background: var(--color-card);
+  color: var(--color-muted-foreground);
+  font-size: var(--font-base);
+  font-weight: 500;
+  border-radius: var(--radius-lg);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.atm-btn-secondary:hover {
+  border-color: var(--color-border-hover);
+  color: var(--color-foreground);
+  background: var(--color-muted);
+}
+
+@media (max-width: 480px) {
+  .atm-container { max-width: 100%; }
+}
 </style>

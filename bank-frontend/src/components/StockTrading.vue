@@ -309,40 +309,221 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.stock-trading { padding: 4px 0; }
-.no-card-wrap { padding: 50px 0; }
-.trade-form { max-width: 520px; margin: 0 auto; }
-.direction-toggle { text-align: center; margin-bottom: 22px; }
-.dir-group .el-radio-button { width: 120px; }
-.form-row { margin-bottom: 16px; }
-.atm-label { display: block; font-size: 13px; font-weight: 600; color: var(--vault-text-2); margin-bottom: 6px; letter-spacing: 0.05em; }
-.pt-group .el-radio-button { width: 100px; }
-.estimate {
-  display: flex; gap: 12px; margin-bottom: 18px;
-  background: rgba(8,12,20,0.5); border: 1px solid var(--vault-line);
-  border-radius: 10px; padding: 14px 16px;
+.stock-trading {
+  padding: var(--space-1) 0;
 }
-.estimate-item { flex: 1; }
-.e-label { display: block; font-size: 11px; color: var(--vault-text-3); margin-bottom: 4px; }
-.e-value { font-size: 18px; font-weight: 700; color: var(--vault-text); }
-.e-value.highlight { color: var(--vault-gold); }
-.submit-btn { width: 100%; font-size: 15px; letter-spacing: 0.1em; height: 46px; }
-.buy-btn { background: linear-gradient(135deg, #b04a4a, #d05a5a); border: none; }
-.sell-btn { background: linear-gradient(135deg, #1e8f87, #2fa8a0); border: none; }
+
+.no-card-wrap {
+  padding: var(--space-16) 0;
+}
+
+.trade-form {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.direction-toggle {
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+
+.dir-group .el-radio-button {
+  width: 120px;
+}
+
+.form-row {
+  margin-bottom: var(--space-4);
+}
+
+.atm-label {
+  display: block;
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+  margin-bottom: var(--space-2);
+  letter-spacing: 0.05em;
+  font-family: var(--font-sans);
+}
+
+.pt-group .el-radio-button {
+  width: 100px;
+}
+
+.estimate {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  background: var(--color-card);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.estimate-item {
+  flex: 1;
+}
+
+.e-label {
+  display: block;
+  font-size: var(--font-sm);
+  color: var(--color-muted-foreground);
+  margin-bottom: var(--space-1);
+  font-family: var(--font-sans);
+}
+
+.e-value {
+  font-size: var(--font-h3);
+  font-weight: 700;
+  color: var(--color-foreground);
+  font-family: var(--font-mono);
+}
+
+.e-value.highlight {
+  color: var(--color-primary);
+}
+
+.submit-btn {
+  width: 100%;
+  font-size: var(--font-base);
+  letter-spacing: 0.1em;
+  height: var(--space-12);
+  font-family: var(--font-sans);
+}
+
+.buy-btn {
+  background: var(--color-destructive);
+  border: none;
+  color: #fff;
+}
+
+.buy-btn:hover {
+  background: color-mix(in srgb, var(--color-destructive) 85%, #000);
+}
+
+.sell-btn {
+  background: var(--color-success);
+  border: none;
+  color: #fff;
+}
+
+.sell-btn:hover {
+  background: color-mix(in srgb, var(--color-success) 85%, #000);
+}
+
 .trade-table {
-  --el-table-header-bg-color: rgba(8,12,20,0.6);
+  --el-table-header-bg-color: var(--color-card);
   --el-table-bg-color: transparent;
   --el-table-tr-bg-color: transparent;
-  --el-table-border-color: var(--vault-line);
-  --el-table-text-color: var(--vault-text);
-  --el-table-header-text-color: var(--vault-text-3);
+  --el-table-border-color: var(--glass-border);
+  --el-table-text-color: var(--color-foreground);
+  --el-table-header-text-color: var(--color-muted-foreground);
 }
-.pos-stock { display: flex; flex-direction: column; }
-.pos-name { color: var(--vault-text); font-weight: 600; }
-.pos-code { font-size: 11px; color: var(--vault-text-3); font-family: var(--vault-font-num); }
-.order-no { font-family: var(--vault-font-num); font-size: 12px; color: var(--vault-text-2); }
-.vault-num { font-family: var(--vault-font-num); }
-.pct { font-size: 11px; font-family: var(--vault-font-num); }
-.up { color: var(--vault-up-soft); }
-.down { color: var(--vault-down-soft); }
+
+:deep(.el-table th.el-table__cell) {
+  font-weight: 600;
+  font-size: var(--font-sm);
+  letter-spacing: 0.05em;
+}
+
+:deep(.el-table .el-table__row:hover > td) {
+  background: var(--color-muted) !important;
+}
+
+.pos-stock {
+  display: flex;
+  flex-direction: column;
+}
+
+.pos-name {
+  color: var(--color-foreground);
+  font-weight: 600;
+  font-family: var(--font-sans);
+}
+
+.pos-code {
+  font-size: var(--font-sm);
+  color: var(--color-muted-foreground);
+  font-family: var(--font-mono);
+}
+
+.order-no {
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
+  color: var(--color-muted-foreground);
+}
+
+.vault-num {
+  font-family: var(--font-mono);
+}
+
+.pct {
+  font-size: var(--font-sm);
+  font-family: var(--font-mono);
+}
+
+.up {
+  color: var(--color-success);
+}
+
+.down {
+  color: var(--color-destructive);
+}
+
+:deep(.el-tabs__item) {
+  color: var(--color-muted-foreground);
+}
+
+:deep(.el-tabs__item.is-active) {
+  color: var(--color-primary);
+}
+
+:deep(.el-tabs__active-bar) {
+  background-color: var(--color-primary);
+}
+
+:deep(.el-input__wrapper) {
+  background: var(--color-card);
+  border: 1px solid var(--glass-border);
+  box-shadow: none;
+}
+
+:deep(.el-input__inner) {
+  color: var(--color-foreground);
+}
+
+:deep(.el-select .el-input__wrapper) {
+  background: var(--color-card);
+}
+
+:deep(.el-radio-button__inner) {
+  background: var(--color-card);
+  border-color: var(--glass-border);
+  color: var(--color-muted-foreground);
+}
+
+:deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+:deep(.el-tag--danger) {
+  --el-tag-bg-color: color-mix(in srgb, var(--color-destructive) 15%, transparent);
+  --el-tag-text-color: var(--color-destructive);
+}
+
+:deep(.el-tag--success) {
+  --el-tag-bg-color: color-mix(in srgb, var(--color-success) 15%, transparent);
+  --el-tag-text-color: var(--color-success);
+}
+
+:deep(.el-tag--warning) {
+  --el-tag-bg-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  --el-tag-text-color: var(--color-primary);
+}
+
+:deep(.el-tag--info) {
+  --el-tag-bg-color: var(--color-muted);
+  --el-tag-text-color: var(--color-muted-foreground);
+}
 </style>

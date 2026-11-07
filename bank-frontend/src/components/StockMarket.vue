@@ -12,7 +12,7 @@
       <el-skeleton :rows="5" animated />
     </div>
 
-    <el-table v-else :data="quotes" class="market-table" size="default">
+    <el-table v-else :data="quotes" class="market-table" size="default" @row-click="onRowClick">
       <el-table-column label="代码" width="100">
         <template #default="{ row }">
           <span class="stock-code">{{ row.stockCode }}</span>
@@ -50,6 +50,11 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { listQuotes } from '@/api/stock'
 
+const props = defineProps({
+  accountNumber: { type: String, default: '' }
+})
+const emit = defineEmits(['open-kline'])
+
 const quotes = ref([])
 const loading = ref(false)
 let timer = null
@@ -66,6 +71,10 @@ const loadQuotes = async () => {
   }
 }
 
+const onRowClick = (row) => {
+  emit('open-kline', row.stockCode, row.stockName)
+}
+
 onMounted(() => {
   loadQuotes()
   timer = setInterval(loadQuotes, 5000)
@@ -77,27 +86,98 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.stock-market { padding: 4px 0; }
-.market-toolbar {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 14px;
+.stock-market {
+  padding: var(--space-1) 0;
 }
-.market-title { font-size: 15px; font-weight: 700; color: var(--vault-text); letter-spacing: 0.06em; }
-.market-sub { font-size: 12px; color: var(--vault-text-3); margin-left: 8px; font-weight: 400; }
-.loading-wrap { padding: 30px; }
+
+.market-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.market-title {
+  font-size: var(--font-h3);
+  font-weight: 700;
+  color: var(--color-foreground);
+  letter-spacing: 0.06em;
+  font-family: var(--font-sans);
+}
+
+.market-sub {
+  font-size: var(--font-base);
+  color: var(--color-muted-foreground);
+  margin-left: var(--space-2);
+  font-weight: 400;
+  font-family: var(--font-sans);
+}
+
+.loading-wrap {
+  padding: var(--space-8);
+}
+
 .market-table {
-  --el-table-header-bg-color: rgba(8,12,20,0.6);
+  --el-table-header-bg-color: var(--color-card);
   --el-table-bg-color: transparent;
   --el-table-tr-bg-color: transparent;
-  --el-table-border-color: var(--vault-line);
-  --el-table-text-color: var(--vault-text);
-  --el-table-header-text-color: var(--vault-text-3);
+  --el-table-border-color: var(--glass-border);
+  --el-table-text-color: var(--color-foreground);
+  --el-table-header-text-color: var(--color-muted-foreground);
 }
-.stock-code { font-family: var(--vault-font-num); color: var(--vault-text-2); font-size: 13px; }
-.stock-name { color: var(--vault-text); font-weight: 600; }
-.price { font-family: var(--vault-font-num); font-size: 15px; font-weight: 700; }
-.change { font-family: var(--vault-font-num); font-weight: 600; }
-.prev-close { font-family: var(--vault-font-num); color: var(--vault-text-3); }
-.up { color: var(--vault-up-soft); }
-.down { color: var(--vault-down-soft); }
+
+:deep(.el-table th.el-table__cell) {
+  font-weight: 600;
+  font-size: var(--font-sm);
+  letter-spacing: 0.05em;
+}
+
+:deep(.el-table .el-table__row:hover > td) {
+  background: var(--color-muted) !important;
+}
+
+.stock-code {
+  font-family: var(--font-mono);
+  color: var(--color-muted-foreground);
+  font-size: var(--font-base);
+}
+
+.stock-name {
+  color: var(--color-foreground);
+  font-weight: 600;
+  font-family: var(--font-sans);
+}
+
+.price {
+  font-family: var(--font-mono);
+  font-size: var(--font-base);
+  font-weight: 700;
+}
+
+.change {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.prev-close {
+  font-family: var(--font-mono);
+  color: var(--color-muted-foreground);
+}
+
+.up {
+  color: var(--color-success);
+}
+
+.down {
+  color: var(--color-destructive);
+}
+
+:deep(.el-button--default) {
+  --el-button-bg-color: var(--color-card);
+  --el-button-border-color: var(--glass-border);
+  --el-button-text-color: var(--color-foreground);
+  --el-button-hover-bg-color: var(--color-muted);
+  --el-button-hover-border-color: var(--color-border-hover);
+  --el-button-hover-text-color: var(--color-foreground);
+}
 </style>

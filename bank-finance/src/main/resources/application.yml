@@ -4,6 +4,16 @@ spring:
     url: jdbc:mysql://127.0.0.1:3307/t_bank?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
     password: ${DB_PASSWORD:}
+    # 新增：显式配置 HikariCP。原来是默认值（maximum-pool-size=10、无 max-lifetime），
+    # 配合 Tomcat 200 个工作线程时连接池很容易被打满，表现为「请求卡住直到 connection-timeout」。
+    hikari:
+      pool-name: BankFinanceHikariPool
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      validation-timeout: 5000
   data:
     redis:
       host: localhost
@@ -70,7 +80,61 @@ face:
   base-url: http://localhost:8001
   timeout-ms: 30000
 
-# 股票行情源:simulated=模拟行情(默认) | sina=新浪真实行情(预留)
+# 股票行情源:simulated=模拟行情 | tencent=腾讯真实行情
 stock:
-  quote-provider: simulated
+  quote-provider: tencent
+
+  # 实时 K 线（GET /stock/kline/{stockCode}?period=1day|1min|5min|1week|1month&limit=120）
+  kline:
+    # 接口默认/最大返回条数
+    default-limit: 120
+    max-limit: 500
+    # 历史不足时按确定性算法补齐（同一根柱子每次算出来都一样，刷新不跳变）。
+    # 关掉则新库首次打开图表会很空，需要先有足够多的真实历史。
+    seed-history: true
+    # 是否尝试抓取腾讯真实历史 K 线；外网不通时自动降级为本地补齐，不影响图表可用性
+    remote-history: true
+    # 远端抓取失败后的冷却时间（秒），避免每个请求都去撞一个不可达的接口
+    remote-retry-seconds: 600
+    # 聚合本系统真实成交（t_stock_trade）时最多往回看多少天
+    trade-lookback-days: 30
+    # 定时把"当前柱"落库，使图表在无人访问时也持续推进。设 false 可关闭。
+    refresh-enabled: true
+    refresh-interval-ms: 10000
+    refresh-initial-delay-ms: 20000
+
+# 新增：应用级开关。此前这些值都硬编码在代码里（见各处「修复记录」注释），
+# 改一个行为必须重新编译打包，现在统一收敛到配置里，且默认值保持原来的行为。
+app:
+  error:
+    # 是否把业务错误码映射成真实 HTTP 状态码(401/403/429/500)。
+    # 默认 true；如果前端只认 HTTP 200 + body.code，把它设成 false 即可退回旧行为。
+    expose-http-status: true
+  cors:
+    # 允许跨域的来源白名单（逗号分隔）。原来是 allowedOriginPatterns("*") +
+    # allowCredentials(true)，任意站点都能带着用户 Cookie 调接口，等于没有同源保护。
+    allowed-origins: http://localhost:5173,http://localhost:3000,http://localhost:8080,http://127.0.0.1:5173,http://127.0.0.1:3000
+  security:
+    # 是否信任 X-Forwarded-For / X-Real-IP 作为限流用的客户端 IP。
+    # 默认 false：这两个头客户端可以随便伪造，直接采信等于限流形同虚设（换个头就绕过）。
+    # 只有确实部署在可信反向代理后面时才设为 true。
+    trust-forwarded-headers: false
+  support:
+    # 客服账号注册的邀请码。留空=不校验（演示/初始化用）；一旦配置，注册必须带
+    # X-Staff-Register-Key 请求头且值一致，否则返回 700003。线上务必配置。
+    staff-register-key: ${STAFF_REGISTER_KEY:}
+
+# 新增：Tomcat 线程/连接配置。原来是默认值，未显式设定，难以评估并发上限。
+server:
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 20
+    accept-count: 200
+    max-connections: 8192
+
+management:
+  health:
+    rabbit:
+      enabled: false
 

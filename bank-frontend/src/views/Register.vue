@@ -1,200 +1,201 @@
 <template>
   <div class="register-page">
-      <div class="register-container">
-        <div class="vault-contour"></div>
-        <div class="register-header">
-          <router-link to="/login" class="back-link">
-            <el-icon><ArrowLeft /></el-icon>
-            <span>返回登录</span>
-          </router-link>
-          <div class="header-brand">
-            <div class="header-logo">
-              <el-icon :size="28" color="var(--vault-accent)"><CreditCard /></el-icon>
-              <span>钱钱银行</span>
+    <div class="register-split">
+      <!-- Left: Branding -->
+      <div class="brand-panel">
+        <div class="brand-bg-grid"></div>
+        <div class="brand-bg-glow"></div>
+        <div class="brand-content">
+          <div class="brand-top">
+            <div class="brand-logo">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M24 4L4 14V34L24 44L44 34V14L24 4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                <path d="M24 4V44" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M4 14L24 24L44 14" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M24 24V44" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 2"/>
+              </svg>
             </div>
-            <h2>开通银行账户</h2>
-            <p>填写以下信息完成账户注册</p>
+            <div>
+              <h1 class="brand-title">SMART<br/>BANK</h1>
+              <p class="brand-tagline">Private Banking</p>
+            </div>
           </div>
-        </div>
 
-      <!-- Step Progress -->
-      <div class="step-indicator">
-        <div class="step-item" :class="{ active: step === 1, done: step > 1 }">
-          <div class="step-circle">
-            <span v-if="step > 1">✓</span>
-            <span v-else>1</span>
+          <div class="steps-visual">
+            <div class="step-visual-item" :class="{ active: step >= 1, done: step > 1 }">
+              <div class="sv-circle">1</div>
+              <div class="sv-info">
+                <span class="sv-title">Basic Info</span>
+                <span class="sv-desc">Account details</span>
+              </div>
+            </div>
+            <div class="sv-line" :class="{ active: step > 1 }"></div>
+            <div class="step-visual-item" :class="{ active: step >= 2, done: step > 2 }">
+              <div class="sv-circle">2</div>
+              <div class="sv-info">
+                <span class="sv-title">Security</span>
+                <span class="sv-desc">Set password</span>
+              </div>
+            </div>
+            <div class="sv-line" :class="{ active: step > 2 }"></div>
+            <div class="step-visual-item" :class="{ active: step >= 3 }">
+              <div class="sv-circle">3</div>
+              <div class="sv-info">
+                <span class="sv-title">Confirm</span>
+                <span class="sv-desc">Review & submit</span>
+              </div>
+            </div>
           </div>
-          <span class="step-label">基本信息</span>
-        </div>
-        <div class="step-line" :class="{ active: step > 1 }"></div>
-        <div class="step-item" :class="{ active: step === 2, done: step > 2 }">
-          <div class="step-circle">
-            <span v-if="step > 2">✓</span>
-            <span v-else>2</span>
+
+          <div class="brand-bottom">
+            <p class="brand-copy">&copy; 2026 Smart Bank. All rights reserved.</p>
           </div>
-          <span class="step-label">账户设置</span>
-        </div>
-        <div class="step-line" :class="{ active: step > 2 }"></div>
-        <div class="step-item" :class="{ active: step === 3 }">
-          <div class="step-circle">3</div>
-          <span class="step-label">完成开通</span>
         </div>
       </div>
 
-      <!-- Step 1: Basic Info -->
-      <div v-if="step === 1" class="step-content">
-        <el-form :model="registerForm" label-width="0" class="register-form">
-          <div class="form-row">
-            <div class="form-group">
-              <label class="input-label">账户账号</label>
-              <el-input v-model="registerForm.accountNumber" placeholder="请输入账号（6-20位数字）" size="large" clearable maxlength="20" />
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="input-label">账户户名</label>
-              <el-input v-model="registerForm.accountHolderName" placeholder="请输入您的真实姓名" size="large" clearable />
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="input-label">手机号码</label>
-              <el-input v-model="registerForm.userPhoneNumber" placeholder="请输入11位手机号码" size="large" clearable maxlength="11" />
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="input-label">开户人有效身份证号</label>
-              <el-input v-model="registerForm.userIdCard" placeholder="请输入有效身份证号" size="large" clearable maxlength="11" />
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="input-label">账户类型</label>
-              <el-select v-model="registerForm.accountType" placeholder="请选择账户类型" size="large" style="width:100%">
-                <el-option label="储蓄账户" value="储蓄">
-                  <div class="option-item">
-                    <el-icon color="var(--vault-gold)"><Coin /></el-icon>
-                    <span>储蓄账户</span>
-                    <span class="option-desc">活期存取，灵活方便</span>
-                  </div>
-                </el-option>
-                <el-option label="活期账户" value="活期">
-                  <div class="option-item">
-                    <el-icon color="var(--vault-up)"><Wallet /></el-icon>
-                    <span>活期账户</span>
-                    <span class="option-desc">随存随取，按日计息</span>
-                  </div>
-                </el-option>
-                <el-option label="定期账户" value="定期">
-                  <div class="option-item">
-                    <el-icon color="var(--vault-accent)"><Timer /></el-icon>
-                    <span>定期账户</span>
-                    <span class="option-desc">固定期限，利率更高</span>
-                  </div>
-                </el-option>
-              </el-select>
-            </div>
-          </div>
-        </el-form>
-        <div class="step-actions">
-          <el-button size="large" @click="step = 2" class="next-btn">
-            下一步
-          </el-button>
-        </div>
-      </div>
+      <!-- Right: Form -->
+      <div class="form-panel">
+        <div class="form-scroll">
+          <div class="form-container">
+            <router-link to="/login" class="back-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/>
+              </svg>
+              <span>Back to Login</span>
+            </router-link>
 
-      <!-- Step 2: Password -->
-      <div v-if="step === 2" class="step-content">
-        <el-form :model="registerForm" label-width="0" class="register-form">
-          <div class="form-row">
-            <div class="form-group">
-              <label class="input-label">设置交易密码</label>
-              <el-input
-                v-model="registerForm.password"
-                type="password"
-                placeholder="请输入6位数字交易密码"
-                size="large"
-                show-password
-                maxlength="6"
-                @input="registerForm.password = registerForm.password.replace(/\D/g, '')"
-              />
-              <span class="input-tip">交易密码用于账户登录和交易验证</span>
+            <div class="form-header">
+              <h2 class="form-title">Create Account</h2>
+              <p class="form-subtitle">Complete the form to open your account</p>
             </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="input-label">确认交易密码</label>
-              <el-input
-                v-model="registerForm.checkPassword"
-                type="password"
-                placeholder="请再次输入交易密码"
-                size="large"
-                show-password
-                maxlength="6"
-                @input="registerForm.checkPassword = registerForm.checkPassword.replace(/\D/g, '')"
-              />
-            </div>
-          </div>
-          <div class="password-strength" v-if="registerForm.password.length > 0">
-            <div class="strength-bar">
-              <div class="strength-fill" :class="strengthClass" :style="{ width: strengthPercent + '%' }"></div>
-            </div>
-            <span class="strength-label">{{ strengthText }}</span>
-          </div>
-        </el-form>
-        <div class="step-actions">
-          <el-button size="large" class="prev-btn" @click="step = 1">上一步</el-button>
-          <el-button size="large" @click="step = 3" class="next-btn">下一步</el-button>
-        </div>
-      </div>
 
-      <!-- Step 3: Confirm -->
-      <div v-if="step === 3" class="step-content">
-        <div class="confirm-info">
-          <div class="confirm-icon">
-            <el-icon :size="48" color="var(--vault-up)"><CircleCheck /></el-icon>
+            <!-- Step 1 -->
+            <div v-if="step === 1" class="step-content">
+              <el-form :model="registerForm" label-width="0" class="register-form">
+                <div class="field-group">
+                  <label class="field-label">Account Number</label>
+                  <el-input v-model="registerForm.accountNumber" placeholder="6-20 digits" size="large" clearable maxlength="20" />
+                </div>
+                <div class="field-group">
+                  <label class="field-label">Account Holder Name</label>
+                  <el-input v-model="registerForm.accountHolderName" placeholder="Enter your full name" size="large" clearable />
+                </div>
+                <div class="field-group">
+                  <label class="field-label">Phone Number</label>
+                  <el-input v-model="registerForm.userPhoneNumber" placeholder="11-digit phone number" size="large" clearable maxlength="11" />
+                </div>
+                <div class="field-group">
+                  <label class="field-label">ID Card Number</label>
+                  <el-input v-model="registerForm.userIdCard" placeholder="18-digit ID number" size="large" clearable maxlength="18" />
+                </div>
+                <div class="field-group">
+                  <label class="field-label">Account Type</label>
+                  <el-select v-model="registerForm.accountType" placeholder="Select type" size="large" style="width:100%">
+                    <el-option label="Savings Account" value="储蓄" />
+                    <el-option label="Current Account" value="活期" />
+                    <el-option label="Fixed Deposit" value="定期" />
+                  </el-select>
+                </div>
+              </el-form>
+              <div class="step-actions">
+                <el-button size="large" type="primary" @click="step = 2" class="action-btn">Next Step</el-button>
+              </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div v-if="step === 2" class="step-content">
+              <el-form :model="registerForm" label-width="0" class="register-form">
+                <div class="field-group">
+                  <label class="field-label">Set Transaction Password</label>
+                  <el-input
+                    v-model="registerForm.password"
+                    type="password"
+                    placeholder="6-digit password"
+                    size="large"
+                    show-password
+                    maxlength="6"
+                    @input="registerForm.password = registerForm.password.replace(/\D/g, '')"
+                  />
+                  <span class="field-tip">Password is used for login and transaction verification</span>
+                </div>
+                <div class="field-group">
+                  <label class="field-label">Confirm Password</label>
+                  <el-input
+                    v-model="registerForm.checkPassword"
+                    type="password"
+                    placeholder="Re-enter password"
+                    size="large"
+                    show-password
+                    maxlength="6"
+                    @input="registerForm.checkPassword = registerForm.checkPassword.replace(/\D/g, '')"
+                  />
+                </div>
+                <div class="password-strength" v-if="registerForm.password.length > 0">
+                  <div class="strength-bar">
+                    <div class="strength-fill" :class="strengthClass" :style="{ width: strengthPercent + '%' }"></div>
+                  </div>
+                  <span class="strength-label">{{ strengthText }}</span>
+                </div>
+              </el-form>
+              <div class="step-actions">
+                <el-button size="large" @click="step = 1" class="action-btn-outline">Previous</el-button>
+                <el-button size="large" type="primary" @click="step = 3" class="action-btn">Next Step</el-button>
+              </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div v-if="step === 3" class="step-content">
+              <div class="confirm-section">
+                <div class="confirm-icon">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                  </svg>
+                </div>
+                <h3 class="confirm-title">Confirm Your Information</h3>
+                <div class="info-card">
+                  <div class="info-row">
+                    <span class="info-label">Account Number</span>
+                    <span class="info-value">{{ registerForm.accountNumber }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">Account Holder</span>
+                    <span class="info-value">{{ registerForm.accountHolderName }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">Phone Number</span>
+                    <span class="info-value">{{ registerForm.userPhoneNumber }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">ID Card</span>
+                    <span class="info-value">{{ registerForm.userIdCard }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">Account Type</span>
+                    <span class="info-value">{{ registerForm.accountType }}</span>
+                  </div>
+                </div>
+                <div class="agreement">
+                  <el-checkbox v-model="agreed">
+                    <span style="font-size:13px;">I agree to the <span class="agreement-link">Terms of Service</span></span>
+                  </el-checkbox>
+                </div>
+              </div>
+              <div class="step-actions">
+                <el-button size="large" @click="step = 2" class="action-btn-outline">Previous</el-button>
+                <el-button
+                  size="large"
+                  type="primary"
+                  :loading="loading"
+                  :disabled="!agreed"
+                  @click="handleRegister"
+                  class="action-btn"
+                >
+                  {{ loading ? 'Creating...' : 'Create Account' }}
+                </el-button>
+              </div>
+            </div>
           </div>
-          <h3 class="confirm-title">请确认开户信息</h3>
-          <div class="info-card">
-            <div class="info-row">
-              <span class="info-label">账户账号</span>
-              <span class="info-value">{{ registerForm.accountNumber }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">账户户名</span>
-              <span class="info-value">{{ registerForm.accountHolderName }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">手机号码</span>
-              <span class="info-value">{{ registerForm.userPhoneNumber }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">开户人有效身份证号</span>
-              <span class="info-value">{{ registerForm.userIdCard }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">账户类型</span>
-              <span class="info-value">{{ registerForm.accountType }}</span>
-            </div>
-          </div>
-          <div class="agreement">
-            <el-checkbox v-model="agreed">
-              <span style="font-size:13px;">我已阅读并同意 <span class="agreement-link">《钱钱银行服务协议》</span></span>
-            </el-checkbox>
-          </div>
-        </div>
-        <div class="step-actions">
-          <el-button size="large" class="prev-btn" @click="step = 2">上一步</el-button>
-          <el-button
-            size="large"
-            :loading="loading"
-            :disabled="!agreed"
-            @click="handleRegister"
-            class="submit-btn-final"
-          >
-            {{ loading ? '开通中...' : '确认开通' }}
-          </el-button>
         </div>
       </div>
     </div>
@@ -206,7 +207,6 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { register } from '@/api/account'
-import { ArrowLeft, CircleCheck, Coin, Timer } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const step = ref(1)
@@ -241,28 +241,28 @@ const strengthClass = computed(() => {
 })
 
 const strengthText = computed(() => {
-  if (strengthPercent.value < 40) return '密码强度：较弱'
-  if (strengthPercent.value < 70) return '密码强度：中等'
-  return '密码强度：强'
+  if (strengthPercent.value < 40) return 'Password strength: Weak'
+  if (strengthPercent.value < 70) return 'Password strength: Medium'
+  return 'Password strength: Strong'
 })
 
 const handleRegister = async () => {
   const form = registerForm.value
-  if (!form.accountNumber) { ElMessage.warning('请输入账号'); return }
-  if (!form.accountHolderName) { ElMessage.warning('请输入户名'); return }
-  if (!form.accountType) { ElMessage.warning('请选择账户类型'); return }
-  if (!form.userPhoneNumber) { ElMessage.warning('请输入手机号'); return }
-  if (!/^\d{6}$/.test(form.password)) { ElMessage.warning('密码必须为6位数字'); return }
-  if (form.password !== form.checkPassword) { ElMessage.warning('两次密码不一致'); return }
-  if (!agreed.value) { ElMessage.warning('请阅读并同意服务协议'); return }
+  if (!form.accountNumber) { ElMessage.warning('Please enter account number'); return }
+  if (!form.accountHolderName) { ElMessage.warning('Please enter account holder name'); return }
+  if (!form.accountType) { ElMessage.warning('Please select account type'); return }
+  if (!form.userPhoneNumber) { ElMessage.warning('Please enter phone number'); return }
+  if (!/^\d{6}$/.test(form.password)) { ElMessage.warning('Password must be 6 digits'); return }
+  if (form.password !== form.checkPassword) { ElMessage.warning('Passwords do not match'); return }
+  if (!agreed.value) { ElMessage.warning('Please agree to the terms'); return }
 
   loading.value = true
   try {
     await register(form)
-    ElMessage.success('🎉 账户开通成功！请登录')
+    ElMessage.success('Account created successfully! Please login.')
     router.push('/login')
   } catch (error) {
-    console.error('注册失败', error)
+    console.error('Registration failed', error)
   } finally {
     loading.value = false
   }
@@ -272,294 +272,439 @@ const handleRegister = async () => {
 <style scoped>
 .register-page {
   min-height: 100vh;
+  background: var(--color-background);
+}
+
+.register-split {
   display: flex;
-  justify-content: center;
+  min-height: 100vh;
+}
+
+/* ====== Brand Panel ====== */
+.brand-panel {
+  flex: 1;
+  position: relative;
+  display: flex;
   align-items: center;
-  background:
-    radial-gradient(1200px 600px at 30% 20%, rgba(212,176,106,0.07) 0%, transparent 60%),
-    var(--vault-bg);
-  padding: 40px 20px;
-}
-
-.register-container {
-  position: relative;
-  width: 560px;
-  max-width: 100%;
-  background: linear-gradient(180deg, var(--vault-panel-2), var(--vault-panel));
-  border: 1px solid var(--vault-line-strong);
-  border-radius: 24px;
-  box-shadow: 0 32px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
+  justify-content: center;
   overflow: hidden;
-  animation: fadeInUp 0.5s ease-out;
+  background:
+    radial-gradient(ellipse at 20% 80%, rgba(245, 158, 11, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+    linear-gradient(135deg, #0A0E1A 0%, #111827 100%);
 }
 
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
+.brand-bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 60px 60px;
 }
 
-.register-header {
-  padding: 28px 32px 20px;
-  border-bottom: 1px solid var(--vault-line);
+.brand-bg-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.04) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.brand-content {
   position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px;
+  max-width: 420px;
+  width: 100%;
+}
+
+.brand-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  margin-bottom: 56px;
+}
+
+.brand-logo {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-on-primary);
+  box-shadow: 0 0 48px rgba(245, 158, 11, 0.25), 0 0 96px rgba(245, 158, 11, 0.08);
+}
+
+.brand-title {
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--color-foreground);
+  letter-spacing: 8px;
+  line-height: 1.15;
+  text-align: center;
+  margin: 0;
+}
+
+.brand-tagline {
+  font-size: 13px;
+  color: var(--color-muted-foreground);
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  font-weight: 400;
+  margin: 8px 0 0;
+}
+
+.steps-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  max-width: 280px;
+  margin-bottom: 56px;
+}
+
+.step-visual-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  transition: all 250ms ease;
+}
+
+.step-visual-item.active {
+  background: rgba(245, 158, 11, 0.06);
+}
+
+.sv-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--color-muted);
+  border: 2px solid var(--color-border);
+  color: var(--color-muted-foreground);
+  flex-shrink: 0;
+  transition: all 250ms ease;
+}
+
+.step-visual-item.active .sv-circle {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.3);
+}
+
+.step-visual-item.done .sv-circle {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.sv-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sv-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.sv-desc {
+  font-size: 11px;
+  color: var(--color-muted-foreground);
+}
+
+.sv-line {
+  width: 2px;
+  height: 24px;
+  background: var(--color-border);
+  margin-left: 17px;
+  transition: background 250ms ease;
+}
+
+.sv-line.active {
+  background: var(--color-success);
+}
+
+.brand-bottom {
+  text-align: center;
+}
+
+.brand-copy {
+  font-size: 11px;
+  color: var(--color-muted-foreground);
+  opacity: 0.5;
+  margin: 0;
+}
+
+/* ====== Form Panel ====== */
+.form-panel {
+  width: 560px;
+  min-width: 560px;
+  display: flex;
+  align-items: stretch;
+  background: linear-gradient(180deg, var(--color-background) 0%, #0D1321 100%);
+}
+
+.form-scroll {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px;
+  overflow-y: auto;
+}
+
+.form-container {
+  width: 100%;
+  max-width: 420px;
+  padding-top: 24px;
 }
 
 .back-link {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  color: var(--vault-text-3);
-  text-decoration: none;
-  margin-bottom: 16px;
-  transition: color 0.2s;
-}
-.back-link:hover { color: var(--vault-accent); }
-
-.header-brand { text-align: center; }
-.header-logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-.header-logo span {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--vault-text);
-  letter-spacing: 2px;
-}
-.header-brand h2 {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--vault-text);
-  letter-spacing: 0.1em;
-  margin-bottom: 4px;
-}
-.header-brand p {
-  font-size: 13px;
-  color: var(--vault-text-3);
-}
-
-/* ===== STEP INDICATOR ===== */
-.step-indicator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px 32px;
-  gap: 0;
-}
-
-.step-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 6px;
-}
-
-.step-circle {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 600;
-  background: var(--vault-graphite);
-  border: 1px solid var(--vault-line);
-  color: var(--vault-text-3);
-  transition: all 0.3s;
-}
-
-.step-item.active .step-circle {
-  background: linear-gradient(135deg, #b08d4a, #d4b06a);
-  color: #fff;
-  box-shadow: 0 0 14px rgba(212,176,106,0.35);
-}
-
-.step-item.done .step-circle {
-  background: rgba(47,168,160,0.15);
-  color: var(--vault-up);
-  border-color: rgba(47,168,160,0.4);
-}
-
-.step-label {
-  font-size: 12px;
-  color: var(--vault-text-3);
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.step-item.active .step-label { color: var(--vault-text); font-weight: 600; }
-.step-item.done .step-label { color: var(--vault-up); }
-
-.step-line {
-  width: 60px;
-  height: 2px;
-  background: var(--vault-line-strong);
-  margin: 0 8px;
-  margin-bottom: 22px;
-  transition: background 0.3s;
-}
-.step-line.active { background: var(--vault-up); }
-
-/* ===== FORM ===== */
-.step-content {
-  padding: 24px 32px 32px;
-}
-
-.register-form {
-  max-width: 400px;
-  margin: 0 auto;
-}
-
-.form-row { margin-bottom: 20px; }
-
-.input-label {
-  display: block;
   font-size: 13px;
-  font-weight: 600;
-  color: var(--vault-text-2);
-  margin-bottom: 6px;
-  letter-spacing: 0.05em;
+  color: var(--color-muted-foreground);
+  text-decoration: none;
+  margin-bottom: 32px;
+  transition: color var(--transition-fast);
+  font-weight: 500;
 }
 
-.input-tip {
+.back-link:hover {
+  color: var(--color-primary);
+}
+
+.form-header {
+  margin-bottom: 32px;
+}
+
+.form-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin-bottom: 8px;
+}
+
+.form-subtitle {
+  font-size: 14px;
+  color: var(--color-muted-foreground);
+  margin: 0;
+}
+
+.field-group {
+  margin-bottom: 20px;
+}
+
+.field-label {
   display: block;
-  font-size: 11px;
-  color: var(--vault-text-3);
-  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+  margin-bottom: 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.field-tip {
+  display: block;
+  font-size: 12px;
+  color: var(--color-muted-foreground);
+  margin-top: 6px;
+  opacity: 0.7;
 }
 
 .register-form :deep(.el-input__wrapper) {
-  height: 46px;
-  border-radius: 10px !important;
+  height: 50px;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 0 0 1px var(--color-border) !important;
+  padding: 0 16px;
+  background: var(--color-muted);
+  transition: all var(--transition-fast);
+}
+
+.register-form :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px var(--color-border-hover) !important;
+}
+
+.register-form :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px var(--color-ring), 0 0 0 4px rgba(6, 182, 212, 0.08) !important;
+}
+
+.register-form :deep(.el-input__inner) {
+  font-size: 14px;
+  color: var(--color-foreground);
 }
 
 .register-form :deep(.el-select__wrapper) {
-  height: 46px;
-  border-radius: 10px;
-  box-shadow: 0 0 0 1px var(--vault-line-strong) !important;
-}
-.register-form :deep(.el-select__wrapper.is-focus) {
-  box-shadow: 0 0 0 1px var(--vault-accent), 0 0 14px rgba(212,176,106,0.2) !important;
+  height: 50px;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 0 0 1px var(--color-border) !important;
+  background: var(--color-muted);
 }
 
-.option-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.option-desc {
-  font-size: 11px;
-  color: var(--vault-text-3);
-  margin-left: 4px;
+.register-form :deep(.el-select__wrapper.is-focused) {
+  box-shadow: 0 0 0 1px var(--color-ring), 0 0 0 4px rgba(6, 182, 212, 0.08) !important;
 }
 
-/* Password Strength */
 .password-strength {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-top: -8px;
-  margin-bottom: 20px;
+  gap: var(--space-3);
+  margin-top: 12px;
+  margin-bottom: 4px;
 }
+
 .strength-bar {
   flex: 1;
   height: 4px;
-  background: var(--vault-graphite);
+  background: var(--color-muted);
   border-radius: 2px;
   overflow: hidden;
 }
+
 .strength-fill {
   height: 100%;
   border-radius: 2px;
-  transition: all 0.3s;
+  transition: all 250ms ease;
 }
-.strength-fill.weak { background: var(--vault-down); }
-.strength-fill.medium { background: var(--vault-gold); }
-.strength-fill.strong { background: var(--vault-up); }
-.strength-label { font-size: 11px; color: var(--vault-text-3); white-space: nowrap; }
 
-/* ===== CONFIRM ===== */
-.confirm-info { text-align: center; }
-.confirm-icon { margin-bottom: 12px; }
-.confirm-title {
-  font-size: 18px;
+.strength-fill.weak { background: var(--color-destructive); }
+.strength-fill.medium { background: var(--color-warning); }
+.strength-fill.strong { background: var(--color-success); }
+
+.strength-label {
+  font-size: 12px;
+  color: var(--color-muted-foreground);
+  white-space: nowrap;
+}
+
+.step-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: 32px;
+}
+
+.action-btn {
+  flex: 1;
+  height: 50px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.action-btn-outline {
+  flex: 1;
+  height: 50px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--vault-text);
-  margin-bottom: 20px;
+}
+
+.confirm-section {
+  text-align: center;
+}
+
+.confirm-icon {
+  margin-bottom: var(--space-5);
+  color: var(--color-success);
+}
+
+.confirm-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-foreground);
+  margin-bottom: var(--space-5);
 }
 
 .info-card {
-  background: rgba(8,12,20,0.5);
-  border: 1px solid var(--vault-line);
-  border-radius: 12px;
-  padding: 20px 24px;
-  margin-bottom: 20px;
+  background: var(--color-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
   text-align: left;
+  margin-bottom: var(--space-5);
 }
 
 .info-row {
   display: flex;
   justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--vault-line);
-}
-.info-row:last-child { border-bottom: none; }
-.info-label { font-size: 14px; color: var(--vault-text-3); }
-.info-value { font-size: 14px; font-weight: 600; color: var(--vault-text); }
-
-.agreement { margin-bottom: 16px; }
-.agreement-link { color: var(--vault-accent); cursor: pointer; font-weight: 600; }
-.agreement-link:hover { color: #e6c98a; }
-
-/* ===== ACTIONS ===== */
-.step-actions {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  max-width: 400px;
-  margin: 24px auto 0;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
 }
 
-.next-btn, .submit-btn-final {
-  flex: 1;
-  height: 48px;
-  background: linear-gradient(135deg, #b08d4a, #d4b06a);
-  border: none;
-  color: #fff;
-  font-size: 16px;
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 13px;
+  color: var(--color-muted-foreground);
+}
+
+.info-value {
+  font-size: 13px;
   font-weight: 600;
-  border-radius: 10px;
-  box-shadow: 0 0 18px rgba(212,176,106,0.2), inset 0 0 0 1px rgba(255,255,255,0.08);
+  color: var(--color-foreground);
 }
-.next-btn:hover, .submit-btn-final:hover {
-  background: linear-gradient(135deg, #c9a458, #e6c98a);
-}
-.submit-btn-final:disabled { background: var(--vault-line-strong); color: var(--vault-text-dim); box-shadow: none; }
 
-.prev-btn {
-  flex: 1;
-  height: 48px;
-  border: 1px solid var(--vault-line);
-  background: rgba(212,176,106,0.04);
-  color: var(--vault-text-2);
-  font-size: 16px;
-  font-weight: 500;
-  border-radius: 10px;
+.agreement {
+  margin-bottom: var(--space-4);
+  text-align: left;
 }
-.prev-btn:hover { border-color: var(--vault-line-hover); color: var(--vault-text); }
 
-.register-footer { text-align: center; padding: 16px 32px 24px; font-size: 13px; color: var(--vault-text-3); border-top: 1px solid var(--vault-line); }
-.footer-link { color: var(--vault-accent); text-decoration: none; font-weight: 600; }
-.footer-link:hover { color: #e6c98a; }
+.agreement-link {
+  color: var(--color-primary);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.agreement-link:hover {
+  color: var(--color-secondary);
+}
+
+/* ====== Responsive ====== */
+@media (max-width: 1024px) {
+  .brand-panel {
+    display: none;
+  }
+  .form-panel {
+    width: 100%;
+    min-width: unset;
+  }
+}
 
 @media (max-width: 480px) {
-  .register-header { padding: 20px 20px 16px; }
-  .step-content { padding: 20px; }
-  .step-line { width: 30px; }
+  .form-scroll {
+    padding: 32px 24px;
+  }
+  .form-title {
+    font-size: 24px;
+  }
+  .step-actions {
+    flex-direction: column;
+  }
 }
 </style>

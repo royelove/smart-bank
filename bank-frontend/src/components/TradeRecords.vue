@@ -2,7 +2,7 @@
   <div class="trade-records">
     <div class="trade-header">
       <div class="trade-header-left">
-        <el-icon :size="20" color="var(--vault-accent)"><Document /></el-icon>
+        <el-icon :size="20" color="var(--color-primary)"><Document /></el-icon>
         <h3>交易明细</h3>
       </div>
     </div>
@@ -144,34 +144,131 @@ onMounted(() => { loadTrades() })
 </script>
 
 <style scoped>
-.trade-records { width: 100%; }
+.trade-records {
+  width: 100%;
+}
 
 .trade-header {
-  display: flex; justify-content: space-between;
-  align-items: center; margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-5);
 }
 
 .trade-header-left {
-  display: flex; align-items: center; gap: 8px;
-}
-.trade-header-left h3 {
-  margin: 0; font-size: 16px; font-weight: 600; color: var(--vault-text);
-  letter-spacing: 0.08em;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
-.amount-cell { font-weight: 600; color: var(--vault-down); font-size: 14px; }
+.trade-header-left h3 {
+  margin: 0;
+  font-size: var(--font-h3);
+  font-weight: 600;
+  color: var(--color-foreground);
+  letter-spacing: 0.08em;
+  font-family: var(--font-sans);
+}
+
+.amount-cell {
+  font-weight: 600;
+  color: var(--color-primary);
+  font-size: var(--font-base);
+  font-family: var(--font-mono);
+}
 
 .pagination-box {
-  margin-top: 20px; display: flex; justify-content: flex-end;
+  margin-top: var(--space-5);
+  display: flex;
+  justify-content: flex-end;
 }
 
 .trade-filter {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
   flex-wrap: wrap;
 }
 
-.filter-sep { color: var(--vault-text-3); font-size: 13px; }
+.filter-sep {
+  color: var(--color-muted-foreground);
+  font-size: var(--font-base);
+  font-family: var(--font-sans);
+}
+
+.vault-num {
+  font-family: var(--font-mono);
+}
+
+:deep(.el-table) {
+  --el-table-header-bg-color: var(--color-card);
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  --el-table-border-color: var(--glass-border);
+  --el-table-text-color: var(--color-foreground);
+  --el-table-header-text-color: var(--color-muted-foreground);
+  font-family: var(--font-sans);
+}
+
+:deep(.el-table th.el-table__cell) {
+  font-weight: 600;
+  font-size: var(--font-sm);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+:deep(.el-table .el-table__row:hover > td) {
+  background: var(--color-muted) !important;
+}
+
+:deep(.el-select),
+:deep(.el-date-editor) {
+  --el-input-bg-color: var(--color-card);
+  --el-input-border-color: var(--glass-border);
+  --el-input-text-color: var(--color-foreground);
+  --el-input-placeholder-color: var(--color-muted-foreground);
+  --el-input-hover-border-color: var(--color-border-hover);
+  --el-input-focus-border-color: var(--color-primary);
+}
+
+:deep(.el-button--primary) {
+  --el-button-bg-color: var(--color-primary);
+  --el-button-border-color: var(--color-primary);
+  --el-button-text-color: var(--color-on-primary);
+  --el-button-hover-bg-color: var(--color-secondary);
+  --el-button-hover-border-color: var(--color-secondary);
+  --el-button-hover-text-color: var(--color-on-primary);
+}
+
+:deep(.el-pagination) {
+  --el-pagination-bg-color: var(--color-card);
+  --el-pagination-text-color: var(--color-muted-foreground);
+  --el-pagination-button-color: var(--color-muted-foreground);
+  --el-pagination-button-bg-color: var(--color-card);
+  --el-pagination-button-disabled-bg-color: var(--color-muted);
+  --el-pagination-hover-color: var(--color-primary);
+}
+
+:deep(.el-pagination.is-background .el-pager li:not(.is-disabled).is-active) {
+  background: var(--color-primary);
+}
+
+:deep(.el-tag--success) {
+  --el-tag-bg-color: color-mix(in srgb, var(--color-success) 15%, transparent);
+  --el-tag-text-color: var(--color-success);
+  --el-tag-border-color: transparent;
+}
+
+:deep(.el-tag--danger) {
+  --el-tag-bg-color: color-mix(in srgb, var(--color-destructive) 15%, transparent);
+  --el-tag-text-color: var(--color-destructive);
+  --el-tag-border-color: transparent;
+}
+
+:deep(.el-tag--primary) {
+  --el-tag-bg-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  --el-tag-text-color: var(--color-primary);
+  --el-tag-border-color: transparent;
+}
 </style>

@@ -1,0 +1,659 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-navy-200 dark:border-navy-700;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-navy-50 text-navy-900 dark:bg-navy-950 dark:text-navy-50 antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* App is light by default; dark mode is opt-in via <html class="dark">.
+     Keeping color-scheme in sync means native scrollbars/form controls match. */
+  :root {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  ::selection {
+    @apply bg-primary-500/20 text-navy-900 dark:text-navy-50;
+  }
+
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-navy-300/80 dark:bg-navy-700 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-navy-400 dark:bg-navy-600;
+  }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes pulseSoft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+}
+
+@layer components {
+  /* ---------------------------------------------------------------
+     Button variants
+     Flat by design: a light UI reads as clean when fills are the only
+     signal. Drop shadows on buttons were doing the same job as the fill
+     and made every action look like it floated.
+     --------------------------------------------------------------- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-45 disabled:cursor-not-allowed dark:focus-visible:ring-offset-navy-950;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 focus-visible:ring-primary-500/40;
+  }
+
+  .btn-secondary {
+    @apply btn bg-white text-navy-700 border border-navy-200 hover:bg-navy-50 hover:border-navy-300 active:bg-navy-100 focus-visible:ring-navy-400/40 dark:bg-navy-800 dark:text-navy-100 dark:border-navy-700 dark:hover:bg-navy-700;
+  }
+
+  .btn-ghost {
+    @apply btn text-navy-600 hover:bg-navy-100 hover:text-navy-900 active:bg-navy-200 focus-visible:ring-navy-400/40 dark:text-navy-300 dark:hover:bg-navy-800 dark:hover:text-navy-100;
+  }
+
+  .btn-danger {
+    @apply btn bg-danger-600 text-white hover:bg-danger-700 active:bg-danger-800 focus-visible:ring-danger-500/40;
+  }
+
+  .btn-link {
+    @apply btn text-primary-600 hover:text-primary-700 underline-offset-2 hover:underline focus-visible:ring-primary-500/40 p-0;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-sm gap-1.5;
+  }
+
+  .btn-md {
+    @apply px-4 py-2 text-sm gap-2;
+  }
+
+  .btn-lg {
+    @apply px-5 py-2.5 text-base gap-2;
+  }
+
+  .btn-icon {
+    @apply p-2;
+  }
+
+  /* Input variants */
+  .input {
+    @apply w-full px-3.5 py-2.5 bg-white border border-navy-200 rounded-lg text-navy-900 placeholder:text-navy-400 transition-colors duration-150 hover:border-navy-300 focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 dark:bg-navy-800 dark:border-navy-700 dark:text-navy-50 dark:placeholder:text-navy-500 dark:hover:border-navy-600;
+  }
+
+  .input-error {
+    @apply border-danger-400 focus:ring-danger-500/10 focus:border-danger-500;
+  }
+
+  .input-success {
+    @apply border-success-400 focus:ring-success-500/10 focus:border-success-500;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-navy-700 dark:text-navy-200 mb-1.5;
+  }
+
+  .form-error {
+    @apply mt-1.5 text-sm text-danger-600 dark:text-danger-400 flex items-center gap-1;
+  }
+
+  .form-hint {
+    @apply mt-1.5 text-sm text-navy-500 dark:text-navy-400;
+  }
+
+  /* ---------------------------------------------------------------
+     Surfaces
+     A card is white paper on a faintly grey canvas, separated by a
+     hairline border. The shadow is deliberately near-invisible — it
+     exists to keep the card from dissolving into the canvas, nothing
+     more.
+     --------------------------------------------------------------- */
+  .card {
+    @apply bg-white dark:bg-navy-900 border border-navy-200 rounded-xl shadow-card dark:border-navy-700/70;
+  }
+
+  .card-hover {
+    @apply card transition-[color,background-color,border-color,box-shadow] duration-200 hover:shadow-card-hover hover:border-navy-300 dark:hover:border-navy-600;
+  }
+
+  .card-padded {
+    @apply card p-6;
+  }
+
+  /* Flush panel that sits inside a card: same surface, no second frame. */
+  .card-flush {
+    @apply bg-white dark:bg-navy-900;
+  }
+
+  /* ---------------------------------------------------------------
+     Table
+     Two shapes:
+       .table-container         standalone — owns its own hairline frame
+       .table-container-bleed   inside a card — the card is already the
+                                frame, so a second border + 24px gutter
+                                would just be double framing
+     --------------------------------------------------------------- */
+  .table-container {
+    @apply overflow-x-auto rounded-lg border border-navy-200 dark:border-navy-700;
+  }
+
+  .table-container-bleed {
+    @apply overflow-x-auto;
+  }
+
+  .table {
+    @apply w-full text-sm text-left;
+  }
+
+  .table th {
+    @apply px-4 py-2.5 font-medium text-navy-500 dark:text-navy-400 bg-navy-50/70 dark:bg-navy-800/40 border-b border-navy-200 dark:border-navy-700 whitespace-nowrap;
+  }
+
+  .table td {
+    @apply px-4 py-3 text-navy-800 dark:text-navy-100 border-b border-navy-100 dark:border-navy-800;
+  }
+
+  .table tbody tr {
+    @apply transition-colors hover:bg-navy-50/80 dark:hover:bg-navy-800/40;
+  }
+
+  .table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+
+  .table-striped tbody tr:nth-child(even) {
+    @apply bg-navy-50/50 dark:bg-navy-800/25;
+  }
+
+  /* The stripe rule and `.table tbody tr:hover` have identical specificity and
+     the stripe comes later, so without this the hover feedback disappears on
+     every even row of a striped table. */
+  .table-striped tbody tr:hover {
+    @apply bg-navy-50/80 dark:bg-navy-800/40;
+  }
+
+  /* Badge — a tint plus its own text colour, no border. Solid pastel fills
+     were the loudest thing on an otherwise quiet page. */
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium whitespace-nowrap;
+  }
+
+  .badge-success {
+    @apply badge bg-success-50 text-success-700 dark:bg-success-500/10 dark:text-success-400;
+  }
+
+  .badge-warning {
+    @apply badge bg-warning-50 text-warning-700 dark:bg-warning-500/10 dark:text-warning-400;
+  }
+
+  .badge-danger {
+    @apply badge bg-danger-50 text-danger-700 dark:bg-danger-500/10 dark:text-danger-400;
+  }
+
+  .badge-info {
+    @apply badge bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300;
+  }
+
+  .badge-neutral {
+    @apply badge bg-navy-100 text-navy-600 dark:bg-navy-800 dark:text-navy-300;
+  }
+
+  /* Modal — a navy scrim rather than pure black, which keeps the overlay in
+     the same colour family as the rest of the UI. */
+  .modal-overlay {
+    @apply fixed inset-0 bg-navy-950/35 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in;
+  }
+
+  .modal-content {
+    @apply bg-white dark:bg-navy-900 border border-navy-200 dark:border-navy-700 rounded-2xl shadow-xl max-h-[90vh] overflow-hidden w-full max-w-lg animate-scale-in;
+  }
+
+  .modal-header {
+    @apply px-6 py-4 border-b border-navy-200 dark:border-navy-800 flex items-center justify-between;
+  }
+
+  .modal-body {
+    @apply p-6 overflow-y-auto max-h-[60vh];
+  }
+
+  .modal-footer {
+    @apply px-6 py-4 border-t border-navy-200 dark:border-navy-800 flex justify-end gap-3;
+  }
+
+  /* Tabs */
+  .tabs {
+    @apply flex border-b border-navy-200 dark:border-navy-800;
+  }
+
+  .tab {
+    @apply px-4 py-3 text-sm font-medium text-navy-500 dark:text-navy-400 border-b-2 border-transparent -mb-px hover:text-navy-900 dark:hover:text-navy-100 transition-colors cursor-pointer;
+  }
+
+  .tab-active {
+    @apply text-primary-700 dark:text-primary-300 border-primary-600;
+  }
+
+  /* Pill tabs — segmented control on a tinted track. Quieter than a row of
+     filled buttons and it reads as one control instead of N actions. */
+  .tab-pills {
+    @apply inline-flex items-center gap-1 p-1 rounded-lg bg-navy-100/80 dark:bg-navy-800/60;
+  }
+
+  .tab-pill {
+    @apply px-3 py-1.5 rounded-md text-sm font-medium text-navy-600 dark:text-navy-300
+           hover:text-navy-900 dark:hover:text-navy-100 transition-colors cursor-pointer;
+  }
+
+  .tab-pill-active {
+    @apply bg-white text-navy-900 shadow-card dark:bg-navy-700 dark:text-navy-50;
+  }
+
+  /* Dropdown */
+  .dropdown {
+    @apply absolute right-0 mt-2 w-56 bg-white dark:bg-navy-900 border border-navy-200 dark:border-navy-700 rounded-xl shadow-lg py-1 z-50 animate-fade-in;
+  }
+
+  .dropdown-item {
+    @apply w-full px-4 py-2 text-sm text-navy-700 dark:text-navy-200 hover:bg-navy-50 dark:hover:bg-navy-800 flex items-center gap-2 transition-colors;
+  }
+
+  .dropdown-divider {
+    @apply h-px bg-navy-200 dark:bg-navy-700 my-1;
+  }
+
+  /* ---------------------------------------------------------------
+     App shell
+     Layout contract:
+       .app-shell            flex row, viewport height, sidebar + main
+       .app-sidebar          fixed-width rail (desktop) / drawer (mobile)
+       .app-main             flex-1 min-w-0 scrolling column
+       .app-topbar           sticky strip at the top of .app-main
+       .app-container        centered content rail with page gutters
+     Every page renders <PageHeader> as the first child of its
+     .app-container, so title rhythm is identical across routes.
+     --------------------------------------------------------------- */
+  .app-shell {
+    @apply flex min-h-screen w-full bg-navy-50 dark:bg-navy-950;
+  }
+
+  .app-sidebar {
+    @apply flex flex-col shrink-0 w-60 bg-white dark:bg-navy-900 border-r border-navy-200 dark:border-navy-800;
+  }
+
+  .app-main {
+    @apply flex-1 min-w-0 flex flex-col;
+  }
+
+  .app-topbar {
+    @apply sticky top-0 z-30 h-14 shrink-0 flex items-center gap-3 px-4 sm:px-6
+           bg-white/80 dark:bg-navy-900/80 backdrop-blur-md
+           border-b border-navy-200 dark:border-navy-800;
+  }
+
+  .app-container {
+    @apply w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8;
+  }
+
+  .app-container-narrow {
+    @apply w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 lg:py-8;
+  }
+
+  /* Sidebar navigation */
+  .nav-section-title {
+    @apply px-3 pt-5 pb-1.5 text-[11px] font-semibold uppercase tracking-wider
+           text-navy-400 dark:text-navy-500;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm
+           text-navy-600 dark:text-navy-300
+           hover:bg-navy-100/70 dark:hover:bg-navy-800 hover:text-navy-900 dark:hover:text-navy-100
+           transition-colors duration-150;
+  }
+
+  .sidebar-link-active {
+    @apply bg-primary-50 text-primary-700 font-medium dark:bg-primary-500/10 dark:text-primary-300;
+  }
+
+  .sidebar-link-icon {
+    @apply w-5 h-5 flex-shrink-0;
+  }
+
+  /* Page layout (kept non-sticky: the topbar owns the sticky slot) */
+  .page-container {
+    @apply min-h-screen bg-navy-50 dark:bg-navy-950;
+  }
+
+  .page-header {
+    @apply flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6 lg:mb-8;
+  }
+
+  /* Owns the vertical rhythm between top-level page blocks. A page renders
+     everything after <PageHeader> inside one of these, so inserting a block
+     never means hand-writing another margin. */
+  .page-content {
+    @apply space-y-6;
+  }
+
+  .page-title {
+    @apply text-heading-lg text-navy-900 dark:text-navy-50;
+  }
+
+  .page-subtitle {
+    @apply text-body-md text-navy-500 dark:text-navy-400 mt-1;
+  }
+
+  .section-title {
+    @apply flex items-center gap-2 text-heading-sm text-navy-900 dark:text-navy-100;
+  }
+
+  /* Secondary "view all" style links that sit inside a card header */
+  .link-muted {
+    @apply text-sm text-navy-500 transition-colors hover:text-primary-600
+           dark:text-navy-400 dark:hover:text-primary-400;
+  }
+
+  .card-header {
+    @apply flex items-start justify-between gap-4 px-6 py-4
+           border-b border-navy-200 dark:border-navy-800;
+  }
+
+  .card-body {
+    @apply p-6;
+  }
+
+  /* Divider between stacked sections inside a single card. */
+  .card-section {
+    @apply px-6 py-5 border-t border-navy-200 dark:border-navy-800;
+  }
+
+  /* Balance hero — replaces the saturated blue gradient block. On a white
+     canvas the number itself is the loudest element, so the surface stays
+     plain and the accent is a thin rule instead of a full-bleed fill. */
+  .hero-card {
+    @apply card p-6 relative overflow-hidden;
+  }
+
+  .hero-card::before {
+    content: '';
+    @apply absolute inset-y-0 left-0 w-1 bg-primary-500;
+  }
+
+  .hero-label {
+    @apply text-sm font-medium text-navy-500 dark:text-navy-400;
+  }
+
+  .hero-value {
+    @apply font-mono text-4xl font-bold tabular-nums text-navy-900 dark:text-navy-50;
+  }
+
+  .hero-meta {
+    @apply flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-navy-500 dark:text-navy-400;
+  }
+
+  /* Stats card */
+  .stat-card {
+    @apply card p-5;
+  }
+
+  .stat-value {
+    @apply text-3xl font-bold font-mono text-navy-900 dark:text-navy-50;
+  }
+
+  .stat-label {
+    @apply text-sm text-navy-500 dark:text-navy-400 mt-1;
+  }
+
+  .stat-trend {
+    @apply flex items-center gap-1 text-sm mt-2;
+  }
+
+  .stat-trend-up {
+    @apply text-success-600 dark:text-success-400;
+  }
+
+  .stat-trend-down {
+    @apply text-danger-600 dark:text-danger-400;
+  }
+
+  /* The icon chip. Neutral by default — four blue chips in a row is
+     decoration, not accent. Opt into `stat-icon-accent` for the one figure
+     the page is actually about. */
+  .stat-icon {
+    @apply w-10 h-10 shrink-0 rounded-lg grid place-items-center
+           bg-navy-100 text-navy-500 dark:bg-navy-800 dark:text-navy-400;
+  }
+
+  .stat-icon-accent {
+    @apply stat-icon bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300;
+  }
+
+  /* Grid layouts */
+  .grid-dashboard {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5;
+  }
+
+  .grid-dashboard-3 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5;
+  }
+
+  .grid-cards {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5;
+  }
+
+  .grid-2 {
+    @apply grid grid-cols-1 lg:grid-cols-2 gap-5;
+  }
+
+  .grid-3 {
+    @apply grid grid-cols-1 lg:grid-cols-3 gap-5;
+  }
+
+  /* Split layouts
+     Two-column page skeletons. Each one collapses to a single column below
+     its breakpoint, so a page never has to hand-write the responsive grid.
+     `items-start` is load-bearing: without it the grid stretches the rail to
+     full row height and a sticky rail would have nothing to stick within. */
+  .layout-split {
+    @apply grid grid-cols-1 gap-6 items-start
+           lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8;
+  }
+
+  .layout-main-aside {
+    @apply grid grid-cols-1 gap-6 items-start
+           xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] xl:gap-8;
+  }
+
+  /* The supporting column sticks under the topbar while the main column
+     scrolls, which is what a summary or task rail should do on a long page. */
+  .layout-main-aside > aside {
+    @apply xl:sticky xl:top-[4.5rem];
+  }
+
+  /* Section navigation rail
+     One DOM, two shapes: a horizontally scrollable pill row on narrow
+     screens, a sticky vertical rail from lg up. Sticky offset is
+     topbar height (3.5rem) + 1rem of breathing room. */
+  .section-nav {
+    @apply flex gap-1.5 overflow-x-auto pb-1 -mb-1
+           lg:flex-col lg:gap-0.5 lg:overflow-visible lg:pb-0 lg:mb-0
+           lg:sticky lg:top-[4.5rem];
+  }
+
+  .section-nav-title {
+    @apply hidden lg:block px-3 pb-1.5 text-[11px] font-semibold uppercase
+           tracking-wider text-navy-400 dark:text-navy-500;
+  }
+
+  .section-nav-item {
+    @apply flex items-center gap-2.5 shrink-0 whitespace-nowrap rounded-lg
+           px-3 py-2 text-sm border border-navy-200 bg-white text-navy-600
+           dark:border-navy-800 dark:bg-navy-900 dark:text-navy-300
+           hover:border-navy-300 hover:text-navy-900
+           dark:hover:border-navy-700 dark:hover:text-navy-100
+           transition-colors duration-150
+           lg:w-full lg:border-transparent lg:bg-transparent lg:hover:bg-navy-100/70
+           dark:lg:border-transparent dark:lg:bg-transparent dark:lg:hover:bg-navy-800;
+  }
+
+  .section-nav-item-active {
+    @apply border-primary-200 bg-primary-50 text-primary-700 font-medium
+           hover:border-primary-200 hover:text-primary-700
+           dark:border-primary-500/20 dark:bg-primary-500/10 dark:text-primary-300
+           dark:hover:border-primary-500/20 dark:hover:text-primary-300
+           lg:border-transparent dark:lg:border-transparent;
+  }
+
+  .section-nav-icon {
+    @apply w-[18px] h-[18px] shrink-0;
+  }
+
+  /* Loading states */
+  .skeleton {
+    @apply animate-pulse bg-navy-100 dark:bg-navy-800 rounded;
+  }
+
+  .skeleton-text {
+    @apply skeleton h-4 w-full;
+  }
+
+  .skeleton-text-short {
+    @apply skeleton-text w-3/4;
+  }
+
+  .skeleton-avatar {
+    @apply skeleton w-10 h-10 rounded-full;
+  }
+
+  .skeleton-card {
+    @apply skeleton h-48;
+  }
+
+  /* Empty state */
+  .empty-state {
+    @apply flex flex-col items-center justify-center py-14 px-4 text-center;
+  }
+
+  .empty-state-icon {
+    @apply w-12 h-12 text-navy-300 dark:text-navy-600 mb-4;
+  }
+
+  .empty-state-title {
+    @apply text-heading-md text-navy-900 dark:text-navy-100;
+  }
+
+  .empty-state-description {
+    @apply text-body-sm text-navy-500 dark:text-navy-400 mt-2 max-w-sm;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .glass {
+    @apply bg-white/75 dark:bg-navy-900/75 backdrop-blur-lg;
+  }
+
+  .glass-strong {
+    @apply bg-white/90 dark:bg-navy-900/90 backdrop-blur-xl;
+  }
+
+  /* Animations */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+  .animate-fade-out {
+    animation: fadeOut 0.2s ease-in;
+  }
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-out;
+  }
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+  .animate-pulse-soft {
+    animation: pulseSoft 2s ease-in-out infinite;
+  }
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  /* Route transition (used by App.vue <RouterView> fade-slide) */
+  .route-fade-enter-active {
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+  }
+  .route-fade-leave-active {
+    transition: opacity 0.12s ease-in;
+  }
+  .route-fade-enter-from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  .route-fade-leave-to {
+    opacity: 0;
+  }
+}

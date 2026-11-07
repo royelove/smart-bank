@@ -14,5 +14,9 @@ public class StockQuoteVO {
     private BigDecimal currentPrice;
     private BigDecimal prevClose;
     private BigDecimal changePercent;
+    private BigDecimal highPrice;
+    private BigDecimal lowPrice;
+    private Long volume;
+    private BigDecimal amount;
     private LocalDateTime quoteTime;
 }

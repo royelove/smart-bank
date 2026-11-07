@@ -1,5 +1,6 @@
 package com.bank.bankfinance.controller;
 
+import com.bank.bankfinance.common.annotation.RateLimit;
 import com.bank.bankfinance.common.result.Result;
 import com.bank.bankfinance.common.util.JwtUtil;
 import com.bank.bankfinance.common.util.LoginContext;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/user")
@@ -23,13 +25,17 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    // 修复：用户注册此前无限流，可被批量刷号。
     @PostMapping("/register")
+    @RateLimit(maxRequests = 5, timeWindow = 1, timeUnit = TimeUnit.HOURS, message = "注册过于频繁，请稍后再试")
     public Result<Void> userRegister(@Valid @RequestBody UserRegisterDTO userRegisterDTO) {
         userService.userRegister(userRegisterDTO);
         return Result.success();
     }
 
+    // 修复：手机号登录此前无限流，可被用来暴力猜测密码（且用户名校验错误信息可枚举手机号）。
     @PostMapping("/login")
+    @RateLimit(maxRequests = 5, timeWindow = 1, timeUnit = TimeUnit.MINUTES, message = "登录尝试过于频繁，请1分钟后再试")
     public Result<String> userLogin(@Valid @RequestBody UserLoginDTO userLoginDTO) {
         User user = userService.login(userLoginDTO.getUserPhone(), userLoginDTO.getPassword());
         String token = jwtUtil.generateToken("U_" + user.getId());
@@ -85,6 +91,7 @@ public class UserController {
     }
 
     @PostMapping("/face/verify")
+    @RateLimit(maxRequests = 10, timeWindow = 1, timeUnit = TimeUnit.MINUTES, message = "操作过于频繁，请稍后再试")
     public Result<FaceVerifyResult> verifyFace(@Valid @RequestBody FaceVerifyDTO faceVerifyDTO) {
         Long userId = LoginContext.getUserId();
         if (userId == null) {
@@ -94,6 +101,7 @@ public class UserController {
     }
 
     @PostMapping("/face/realname/verify")
+    @RateLimit(maxRequests = 10, timeWindow = 1, timeUnit = TimeUnit.MINUTES, message = "操作过于频繁，请稍后再试")
     public Result<FaceVerifyResult> verifyRealName(@Valid @RequestBody FaceVerifyDTO faceVerifyDTO) {
         Long userId = LoginContext.getUserId();
         if (userId == null) {

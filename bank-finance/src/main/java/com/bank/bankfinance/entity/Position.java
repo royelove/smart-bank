@@ -18,6 +18,8 @@ public class Position {
     private String stockCode;
     private String stockName;
     private Integer quantity;
+    /** 卖出委托冻结股数，可用股数 = quantity - frozenQuantity */
+    private Integer frozenQuantity;
     private BigDecimal avgCost;
 
     @TableField(fill = FieldFill.INSERT)
